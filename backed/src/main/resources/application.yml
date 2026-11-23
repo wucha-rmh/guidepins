@@ -4,7 +4,7 @@ server:
 spring:
   config:
     # .env 按 Java Properties 格式读取；本地文件被 Git 忽略，系统环境变量仍可覆盖它。
-    import: "optional:file:./.env[.properties]"
+    import: "optional:file:./backed/.env[.properties]"
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${GUIDEPINS_DB_URL:jdbc:postgresql://127.0.0.1:5433/guidepins}
@@ -27,4 +27,4 @@ mybatis-plus:
       id-type: input
 guidepins:
   basemap:
-    file: ${GUIDEPINS_NANJING_PM:../map/南京全市离线地图/nanjing-z16.pmtiles}
+    file: ${GUIDEPINS_NANJING_PM:./map/南京全市离线地图/nanjing-z16.pmtiles}

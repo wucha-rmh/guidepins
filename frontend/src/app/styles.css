@@ -1,0 +1,117 @@
+/* PC 页面基础样式：只负责页面布局与通用视觉，不包含业务状态。 */
+:root {
+  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  color: #223735;
+  background: #f5f8f8;
+  font-size: 16px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --accent: #176c60;
+  --muted: #667977;
+  --line: #dce6e3;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 1100px; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible { outline: 3px solid #248e7e; outline-offset: 4px; }
+h1, h2, h3, h4, p { margin: 0; }
+.muted { color: var(--muted); font-size: .875rem; }
+.site-header { height: 80px; padding: 0 40px; display: flex; align-items: center; gap: 28px; border-bottom: 1px solid var(--line); background: white; }
+.brand { display: inline-flex; align-items: center; gap: 12px; font-size: 1.375rem; font-weight: 700; letter-spacing: .06em; }
+.brand-mark { display: grid; place-items: center; width: 40px; height: 40px; color: white; background: var(--accent); border-radius: 13px 13px 13px 3px; font-size: 1.125rem; }
+.header-caption { flex: 1; color: var(--muted); font-size: .875rem; }
+.tag { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 6px; background: #edf4f1; color: #38645b; font-size: .875rem; font-weight: 400; }
+.skip-link { position: absolute; top: -100px; left: 20px; z-index: 10; background: white; padding: 12px; }
+.skip-link:focus { top: 10px; }
+.city-page { max-width: 1280px; margin: auto; padding: 64px 56px 28px; }
+.eyebrow { color: var(--accent); font-size: .875rem; letter-spacing: .05em; }
+.city-intro h1 { font-size: 3.25rem; font-weight: 650; line-height: 1.28; letter-spacing: -.04em; margin: 18px 0; }
+.city-intro p { color: var(--muted); line-height: 1.8; }
+.city-directory { margin-top: 48px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.section-heading h2 { font-size: 1.25rem; }
+.city-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.city-card { overflow: hidden; background: white; border: 1px solid var(--line); border-radius: 14px; transition: border-color .15s, box-shadow .15s; }
+.city-card:hover { border-color: #79a99b; box-shadow: 0 8px 24px #244c3f0c; }
+.city-card-art { height: 150px; background: #e0eeea; position: relative; overflow: hidden; }
+.city-art-orbit { position: absolute; width: 240px; height: 240px; border: 30px solid #c4ded5; border-radius: 50%; right: -44px; top: -50px; transform: scaleX(1.2) rotate(-25deg); }
+.city-art-orbit::after { content: ''; position: absolute; inset: 20px; border: 1px solid #a7c9bb; border-radius: 50%; }
+.city-art-name { position: absolute; bottom: 20px; left: 25px; color: #306559; font-size: 2.125rem; letter-spacing: .14em; font-weight: 600; }
+.city-art-pin { position: absolute; z-index: 1; right: 85px; top: 50px; width: 26px; height: 26px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2d7a66; box-shadow: 0 4px 15px #2d7a6624; }
+.city-art-pin::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: white; }
+.city-card-content { padding: 22px 24px; }
+.city-card-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.city-card h3 { font-size: 1.25rem; }
+.city-card-content p { margin-top: 10px; font-size: .875rem; color: var(--muted); }
+.city-card-action { display: inline-block; margin-top: 24px; color: var(--accent); font-size: .875rem; font-weight: 600; }
+.page-footnote { margin-top: 38px; color: var(--muted); font-size: .875rem; }
+.button { display: inline-flex; justify-content: center; align-items: center; padding: 9px 16px; min-height: 40px; border: 1px solid transparent; border-radius: 7px; font-size: .875rem; }
+.button--primary { color: white; background: var(--accent); }
+.button--primary:hover { background: #12574d; }
+.button--secondary { color: #315c51; border-color: #c6d8d1; background: white; }
+.button--secondary:hover { background: #edf5f1; }
+.state-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 40px 20px; min-height: 260px; }
+.city-directory > .state-panel { background: white; border: 1px solid var(--line); border-radius: 12px; }
+.state-panel h2 { font-size: 1.125rem; line-height: 1.5; }
+.state-panel p { max-width: 360px; color: var(--muted); font-size: .875rem; line-height: 1.8; }
+.state-symbol { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #c6d7cf; border-radius: 50%; color: #638475; font-size: 1.125rem; }
+.state-panel--error .state-symbol { background: #fff2ec; border-color: #edd1c3; color: #a64d29; }
+.state-symbol--loading { width: 30px; height: 30px; border: 3px solid #d8e6e0; border-top-color: var(--accent); animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+.map-page { padding: 0 28px 24px; }
+.map-page-heading { height: 78px; display: flex; align-items: center; justify-content: space-between; }
+.map-heading-title { display: flex; align-items: center; gap: 20px; }
+.map-heading-title h1 { font-size: 1.375rem; }
+.heading-divider { height: 22px; width: 1px; background: var(--line); }
+.text-link { color: var(--accent); font-size: .875rem; }
+.text-link:hover { text-decoration: underline; }
+.map-workspace { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 560px; height: calc(100dvh - 182px); overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.map-sidebar { overflow-y: auto; border-right: 1px solid var(--line); }
+.public-map-panel, .map-detail-panel { padding: 24px; }
+.panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.panel-heading h2 { font-size: 1rem; }
+.panel-description { font-size: .875rem; color: var(--muted); line-height: 1.8; }
+.public-map-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 12px; }
+.public-map-card { display: block; border: 1px solid var(--line); border-radius: 9px; padding: 16px 18px; }
+.public-map-card:hover { border-color: #86b4a4; }
+.public-map-card--selected { border-color: #599f86; background: #f0f7f3; }
+.public-map-card h3 { font-size: 1.0625rem; }
+.public-map-card-action { display: block; margin-top: 10px; color: var(--accent); font-size: .8125rem; }
+.map-detail-panel { border-top: 1px solid var(--line); }
+.pin-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 20px; }
+.pin-summary h3 { font-size: 1.0625rem; }
+.pin-summary + .panel-description { margin-top: 8px; }
+.pin-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+.pin-item { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; width: 100%; padding: 12px; text-align: left; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.pin-item:hover { border-color: #86b4a4; background: #f7fbf9; }
+.pin-item--selected { border-color: #c07a4f; background: #fdf6f0; }
+.pin-index { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #edf4f1; color: #38645b; font-size: .8125rem; font-weight: 600; }
+.pin-item--selected .pin-index { background: #f3e3d7; color: #8f4a27; }
+.pin-name { display: block; font-size: .9375rem; font-weight: 600; }
+/* 未选中时说明最多两行，选中后展开完整内容。 */
+.pin-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 6px; color: var(--muted); font-size: .8125rem; line-height: 1.7; }
+.pin-item--selected .pin-description { -webkit-line-clamp: unset; }
+/* 图钉说明气泡由 MapLibre 插入地图容器，需用全局选择器。 */
+.pin-popup .maplibregl-popup-content { padding: 10px 12px; border: 1px solid #d9e3df; border-radius: 8px; box-shadow: 0 6px 18px #244c3f1f; }
+.pin-popup-content strong { display: block; font-size: .9375rem; color: #223735; }
+.pin-popup-content p { margin-top: 6px; color: #5a6d6a; font-size: .8125rem; line-height: 1.7; }
+.sidebar-note { margin: 12px 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+.sidebar-note h3 { font-size: .875rem; font-weight: 600; }
+.sidebar-note p { margin-top: 10px; color: var(--muted); font-size: .875rem; line-height: 1.8; }
+.map-sidebar .state-panel { min-height: 240px; padding: 30px 0; }
+.map-sidebar .state-panel h2 { font-size: 1rem; }
+.basemap-viewport { position: relative; min-width: 0; background: #f5f3ee; }
+/* 高于 MapLibre 默认容器样式的优先级，保证异步加载 CSS 后仍撑满地图区域。 */
+.basemap-viewport .basemap-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-caption { position: absolute; top: 20px; left: 24px; z-index: 1; display: flex; gap: 12px; align-items: center; background: #ffffffed; border: 1px solid var(--line); padding: 10px 14px; border-radius: 7px; font-size: .875rem; pointer-events: none; }
+.map-caption span { color: var(--muted); }
+.map-bottom-note { position: absolute; bottom: 40px; right: 10px; color: #425c50; font-size: .875rem; background: #fffffff0; padding: 6px 10px; border-radius: 4px; pointer-events: none; }
+.map-view-actions { position: absolute; top: 76px; left: 24px; z-index: 1; display: flex; gap: 8px; }
+.map-view-actions .button:disabled { opacity: .5; cursor: default; }
+.basemap-state { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: #f5f8f8ed; }
+.basemap-state .state-panel { max-width: 420px; }
+.not-found-page { max-width: 700px; margin: 80px auto; }
