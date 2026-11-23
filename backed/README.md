@@ -28,12 +28,12 @@ ID 使用 UUID，坐标使用 WGS84（经度在前）。前端从地市接口取
 需要 Java 25、Maven、已开启的 FinalShell 数据库端口转发，以及按[阶段一数据库文档](../docs/技术/阶段一数据库建库建表.md)准备的数据。从 backed/ 目录运行：
 
 ```powershell
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 # 在 .env 中填写 GUIDEPINS_DB_PASSWORD
 mvn spring-boot:run
 ```
 
-.env 按 Java Properties 格式填写，已被 Git 忽略。默认数据库地址为 127.0.0.1:5433/guidepins；可用 GUIDEPINS_DB_URL、GUIDEPINS_DB_USER、GUIDEPINS_DB_PASSWORD 覆盖。地图包默认读取 ../map/南京全市离线地图/nanjing-z16.pmtiles；从其他目录启动时可用 GUIDEPINS_NANJING_PM 指定绝对路径。
+.env 按 Java Properties 格式填写，已被 Git 忽略；.env.example 是可提交的示例，不保存真实密码。后端默认监听 8080，可在 .env 中设置 GUIDEPINS_SERVER_PORT 修改。默认数据库地址为 127.0.0.1:5433/guidepins；可用 GUIDEPINS_DB_URL、GUIDEPINS_DB_USER、GUIDEPINS_DB_PASSWORD 覆盖。地图包默认读取 ../map/南京全市离线地图/nanjing-z16.pmtiles；从其他目录启动时可用 GUIDEPINS_NANJING_PM 指定绝对路径。
 
 ## 验证与阶段限制
 
