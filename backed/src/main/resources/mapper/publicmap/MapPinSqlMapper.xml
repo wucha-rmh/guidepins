@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guidepins.publicmap.mapper.mybatis.MapPinSqlMapper">
+    <resultMap id="mapPinRow" type="com.guidepins.publicmap.mapper.entity.MapPinRow">
+        <id property="id" column="id" typeHandler="com.guidepins.config.mybatis.PostgresUuidTypeHandler"/>
+        <result property="mapId" column="map_id" typeHandler="com.guidepins.config.mybatis.PostgresUuidTypeHandler"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="longitude" column="longitude"/>
+        <result property="latitude" column="latitude"/>
+    </resultMap>
+
+    <!-- 地图详情只读取所属图钉，名称与 UUID 决定稳定顺序。 -->
+    <select id="selectByMap" resultMap="mapPinRow">
+        SELECT id, map_id, name, description, longitude, latitude
+        FROM public.map_pin
+        WHERE map_id = #{mapId,typeHandler=com.guidepins.config.mybatis.PostgresUuidTypeHandler}
+        ORDER BY name, id
+    </select>
+</mapper>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guidepins.publicmap.mapper.mybatis.TravelMapSqlMapper">
+    <resultMap id="travelMapRow" type="com.guidepins.publicmap.mapper.entity.TravelMapRow">
+        <id property="id" column="id" typeHandler="com.guidepins.config.mybatis.PostgresUuidTypeHandler"/>
+        <result property="cityId" column="city_id" typeHandler="com.guidepins.config.mybatis.PostgresUuidTypeHandler"/>
+        <result property="name" column="name"/>
+    </resultMap>
+
+    <sql id="mapColumns">id, city_id, name</sql>
+
+    <!-- 仅查询指定地市的公共地图，保持列表顺序稳定。 -->
+    <select id="selectByCity" resultMap="travelMapRow">
+        SELECT <include refid="mapColumns"/>
+        FROM public.travel_map
+        WHERE city_id = #{cityId,typeHandler=com.guidepins.config.mybatis.PostgresUuidTypeHandler}
+        ORDER BY name, id
+    </select>
+
+    <select id="selectMapById" resultMap="travelMapRow">
+        SELECT <include refid="mapColumns"/>
+        FROM public.travel_map
+        WHERE id = #{id,typeHandler=com.guidepins.config.mybatis.PostgresUuidTypeHandler}
+    </select>
+</mapper>

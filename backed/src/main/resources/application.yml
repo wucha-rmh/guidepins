@@ -1,0 +1,27 @@
+spring:
+  config:
+    # .env 按 Java Properties 格式读取；本地文件被 Git 忽略，系统环境变量仍可覆盖它。
+    import: "optional:file:./.env[.properties]"
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${GUIDEPINS_DB_URL:jdbc:postgresql://127.0.0.1:5433/guidepins}
+    username: ${GUIDEPINS_DB_USER:guidepins_agent}
+    password: ${GUIDEPINS_DB_PASSWORD:}
+    hikari:
+      read-only: true
+mybatis-plus:
+  # 所有当前业务读取语句均放在对应模块的 Mapper XML 中。
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    # 对应 PostgreSQL 的 city_id、map_id、basemap_path 等下划线列名。
+    map-underscore-to-camel-case: true
+    # PostgreSQL 不使用 MyBatis 默认的 OTHER 类型绑定普通空值。
+    jdbc-type-for-null: 'NULL'
+  type-handlers-package: com.guidepins.config.mybatis
+  global-config:
+    db-config:
+      # 三张表的 UUID 均由应用指定，不使用 MySQL 自增主键习惯。
+      id-type: input
+guidepins:
+  basemap:
+    file: ${GUIDEPINS_NANJING_PM:../map/南京全市离线地图/nanjing-z16.pmtiles}

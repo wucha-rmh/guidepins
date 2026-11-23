@@ -1,0 +1,30 @@
+# 前端依赖、构建产物和测试覆盖率
+node_modules/
+/frontend/dist/
+/frontend/coverage/
+*.tsbuildinfo
+
+# Java / Maven 构建产物
+target/
+*.class
+.m2/
+
+# 本地环境配置和日志
+.env
+.env.*
+!.env.example
+*.log
+
+# 编辑器和操作系统生成的文件
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 地图相关产物
+map/
+
+# 本地项目文案
+docs/

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guidepins.city.mapper.mybatis.CitySqlMapper">
+    <resultMap id="cityRow" type="com.guidepins.city.mapper.entity.CityRow">
+        <id property="id" column="id" typeHandler="com.guidepins.config.mybatis.PostgresUuidTypeHandler"/>
+        <result property="code" column="code"/>
+        <result property="name" column="name"/>
+        <result property="basemapPath" column="basemap_path"/>
+        <result property="west" column="west"/>
+        <result property="south" column="south"/>
+        <result property="east" column="east"/>
+        <result property="north" column="north"/>
+    </resultMap>
+
+    <sql id="cityColumns">id, code, name, basemap_path, west, south, east, north</sql>
+
+    <!-- 地市目录按行政编号稳定排序。 -->
+    <select id="selectAllCities" resultMap="cityRow">
+        SELECT <include refid="cityColumns"/>
+        FROM public.city
+        ORDER BY code
+    </select>
+
+    <select id="selectCityById" resultMap="cityRow">
+        SELECT <include refid="cityColumns"/>
+        FROM public.city
+        WHERE id = #{id,typeHandler=com.guidepins.config.mybatis.PostgresUuidTypeHandler}
+    </select>
+</mapper>
