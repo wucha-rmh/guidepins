@@ -29,7 +29,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .section-kicker { display: block; color: #879180; font-size: .625rem; font-weight: 500; letter-spacing: .16em; line-height: 1.8; }
 
 /* 导航保持 68px 高度，避免改变地图工作区的可用高度；小字统一提高可读性。 */
-.site-header { height: 68px; display: flex; align-items: center; gap: 28px; padding: 0 36px; border-bottom: 1px solid var(--line); background: var(--paper); }
+.site-header { position: relative; z-index: 20; height: 68px; display: flex; align-items: center; gap: 28px; padding: 0 36px; border-bottom: 1px solid var(--line); background: var(--paper); }
 .brand { display: inline-flex; align-items: center; flex-shrink: 0; gap: 12px; }
 .brand-mark { display: grid; place-items: center; width: 32px; height: 36px; border: 1.5px solid var(--accent); border-radius: 16px 16px 16px 4px; transform: rotate(-8deg); }
 .brand-mark span { width: 8px; height: 8px; border: 1.5px solid var(--accent); border-radius: 50%; }
@@ -133,8 +133,16 @@ h1, h2, h3, h4, p { margin: 0; }
 .close-map > span { font-size: 1.0625rem; line-height: 1; }
 .workspace-hint { display: flex; align-items: center; gap: 8px; color: #89957d; font-size: .6875rem; white-space: nowrap; }
 .workspace-hint > span { width: 5px; height: 5px; border-radius: 50%; background: #94ab85; }
-.map-workspace { --map-pin-active: #a65330; display: grid; grid-template-columns: 304px minmax(0, 1fr); min-height: 520px; height: calc(100dvh - 148px); overflow: hidden; border: 1px solid #dce3d4; border-radius: 14px; background: var(--paper); box-shadow: 0 5px 25px #364a3104; }
-.map-sidebar { min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d2dbca transparent; border-right: 1px solid var(--line); }
+.map-workspace { --map-pin-active: #a65330; --sidebar-width: 304px; position: relative; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); min-height: 520px; height: calc(100dvh - 148px); overflow: hidden; border: 1px solid #dce3d4; border-radius: 14px; background: var(--paper); box-shadow: 0 5px 25px #364a3104; }
+.map-workspace--sidebar-collapsed { --sidebar-width: 0px; }
+.map-sidebar { grid-column: 1; grid-row: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d2dbca transparent; border-right: 1px solid var(--line); }
+.map-workspace > .basemap-viewport { grid-column: 2; grid-row: 1; }
+/* 收纳按钮独立于隐藏区域，收起后仍可通过鼠标或键盘展开；不重建地图实例。 */
+.sidebar-toggle { position: absolute; z-index: 4; top: 50%; left: var(--sidebar-width); display: grid; place-items: center; width: 30px; height: 48px; padding: 0; transform: translateY(-50%); border: 1px solid #cbd5c6; border-left: 0; border-radius: 0 8px 8px 0; color: var(--accent); background: var(--paper); box-shadow: 2px 1px 6px #263d2f0a; }
+.sidebar-toggle:hover { background: var(--accent-soft); }
+.sidebar-toggle:focus-visible { outline-offset: -3px; }
+.sidebar-toggle svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.map-workspace--sidebar-collapsed .sidebar-toggle svg { transform: rotate(180deg); }
 .public-map-panel, .map-detail-panel { padding: 24px 19px; }
 .public-map-panel > .section-kicker { margin: 0 4px 9px; }
 .panel-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 4px 9px; }

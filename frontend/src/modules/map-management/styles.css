@@ -1,0 +1,17 @@
+/* 地图分类、个人列表和元数据管理位于同一侧栏，保持画布面积。 */
+.map-tabs { display: flex; gap: 4px; margin: 16px 19px 0; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: #f5f6ef; }
+.map-tabs button { flex: 1; min-height: 36px; padding: 8px; border: 0; border-radius: 6px; color: #667267; background: transparent; font-size: .8125rem; }
+.map-tabs button[aria-pressed="true"] { color: var(--accent); background: var(--paper); box-shadow: 0 1px 4px #263d2f0a; }
+.create-map-form { margin-top: 20px; padding-bottom: 24px; border-bottom: 1px solid var(--line); gap: 12px; }
+.owned-map-list { display: grid; gap: 8px; margin: 20px 0 0; padding: 0; list-style: none; }
+.owned-map-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 14px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.owned-map-card:hover { border-color: #a1b79b; background: #f7f9f3; }
+.owned-map-card--selected { border-color: #9eaf93; background: #edf3e7; }
+.owned-map-title { font-size: .875rem; line-height: 1.6; overflow-wrap: anywhere; }
+.owned-map-card small { grid-column: 1 / -1; color: #667267; font-size: .6875rem; line-height: 1.7; font-variant-numeric: tabular-nums; }
+.visibility-label { flex-shrink: 0; align-self: start; padding: 2px 7px; border: 1px solid #dbe2d3; border-radius: 5px; color: #53694f; background: #f3f5ec; font-size: .6875rem; line-height: 1.6; }
+.map-settings-panel { display: grid; gap: 16px; padding: 24px 19px; border-top: 1px solid var(--line); }
+.map-settings-panel > .panel-heading { margin-bottom: 0; }
+.map-times { display: grid; gap: 5px; margin: 0; padding-top: 16px; border-top: 1px solid var(--line); color: #667267; font-size: .6875rem; line-height: 1.7; }
+.map-times dd { margin: 0 0 8px; font-variant-numeric: tabular-nums; }
+.visibility-form { padding-top: 16px; border-top: 1px solid var(--line); }

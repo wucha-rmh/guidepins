@@ -1,0 +1,17 @@
+/* 认证和地图管理共用表单语义与反馈样式，业务状态仍由各模块负责。 */
+input, select { font: inherit; }
+input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.stack-form { display: grid; gap: 16px; }
+.form-field { display: grid; gap: 8px; color: #405347; font-size: .8125rem; line-height: 1.5; }
+.form-field input, .form-field select { min-width: 0; width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid #cbd5c6; border-radius: 8px; color: #293d35; background: var(--paper); }
+.form-field input::placeholder { color: #7a8577; }
+.form-field input:disabled, .form-field select:disabled { background: #f1f3ec; }
+.form-help { color: #667267; font-size: .75rem; line-height: 1.8; overflow-wrap: anywhere; }
+.form-error, .form-success { padding: 10px 12px; border-radius: 8px; font-size: .8125rem; line-height: 1.7; overflow-wrap: anywhere; }
+.form-error { color: #8b352a; background: #fbefeb; }
+.form-success { color: #315f4e; background: var(--accent-soft); }
+.stack-form > .button { justify-self: start; min-height: 40px; font-size: .8125rem; }
+.button:disabled { opacity: .55; }
+.session-message { position: fixed; z-index: 10; right: 24px; bottom: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; max-width: 460px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; color: #315f4e; background: var(--paper); font-size: .8125rem; box-shadow: 0 4px 18px #263d2f12; }
+.session-message--error { border-color: #e2c7bb; color: #8b352a; }
+.session-message button { padding: 4px; border: 0; background: transparent; }
