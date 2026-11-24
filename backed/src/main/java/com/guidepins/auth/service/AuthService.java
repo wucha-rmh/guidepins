@@ -47,8 +47,8 @@ public class AuthService {
     @Transactional
     public AccountIdentity register(String email, String phone, String password) {
         checkIdentifier(email, phone);
-        if (password.length() < 10) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "密码需为 10 至 128 个字符");
+        if (password.length() < 6) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "密码需为 6 至 128 个字符");
         }
         try {
             Account account = accounts.createAccount(email, phone, passwords.encode(password));

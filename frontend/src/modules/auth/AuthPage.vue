@@ -48,8 +48,8 @@ async function submit() {
     try { fullPhone = phoneForRequest(phoneRegion.value, value) }
     catch (cause) { error.value = errorMessage(cause); return }
   }
-  if (!password.value.trim() || password.value.length > 128 || (registering.value && password.value.length < 10)) {
-    error.value = registering.value ? '密码需为 10 至 128 个字符。' : '请输入密码，最多 128 个字符。'; return
+  if (!password.value.trim() || password.value.length > 128 || (registering.value && password.value.length < 6)) {
+    error.value = registering.value ? '密码需为 6 至 128 个字符。' : '请输入密码，最多 128 个字符。'; return
   }
   const credentials: Credentials = method.value === 'email'
     ? { email: value.toLowerCase(), password: password.value }
@@ -112,9 +112,9 @@ async function submit() {
         </div>
         <label class="form-field" for="auth-password">密码
           <input id="auth-password" v-model="password" type="password" :autocomplete="registering ? 'new-password' : 'current-password'"
-            :minlength="registering ? 10 : 1" maxlength="128" required :disabled="busy || authBusy" />
+            :minlength="registering ? 6 : 1" maxlength="128" required :disabled="busy || authBusy" />
         </label>
-        <p class="form-help">{{ registering ? '密码为 10 至 128 个字符。暂不验证邮箱或手机号，暂不支持找回密码。' : '密码中的首尾空格会保留。' }}</p>
+        <p class="form-help">{{ registering ? '密码为 6 至 128 个字符。暂不验证邮箱或手机号，暂不支持找回密码。' : '密码中的首尾空格会保留。' }}</p>
         <p v-if="error" class="form-error" role="alert">{{ error }}</p>
         <p v-if="message" class="form-success" role="status">{{ message }}</p>
         <button class="button button--primary" type="submit" :disabled="busy || authBusy">{{ busy ? '正在处理…' : registering ? '注册账号' : '登录' }}</button>
