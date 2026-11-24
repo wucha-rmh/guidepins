@@ -1,6 +1,7 @@
 package com.guidepins.basemap.controller;
 
 import com.guidepins.basemap.service.BasemapService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,11 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 /** 以数据库南京 basemap_path 所记录的 URL 提供 PMTiles 地图包。 */
 @RestController
 public class BasemapController {
-    private final BasemapService basemaps;
-
-    public BasemapController(BasemapService basemaps) {
-        this.basemaps = basemaps;
-    }
+    @Autowired
+    private BasemapService basemaps;
 
     @GetMapping("/maps/nanjing/v1/nanjing-z16.pmtiles")
     ResponseEntity<Resource> nanjing() {

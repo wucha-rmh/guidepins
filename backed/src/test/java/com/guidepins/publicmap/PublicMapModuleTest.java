@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class PublicMapModuleTest {
@@ -54,10 +55,16 @@ class PublicMapModuleTest {
         when(maps.selectByCity(cityId)).thenReturn(List.of(mapRow));
         when(pins.selectByMap(mapId)).thenReturn(List.of(pinRow));
 
-        MyBatisPublicMapMapper dataMapper = new MyBatisPublicMapMapper(maps, pins);
-        assertEquals(List.of(map), dataMapper.findByCityId(cityId));
-        assertEquals(Optional.of(map), dataMapper.findById(mapId));
-        assertEquals(List.of(pin), dataMapper.findPinsByMapId(mapId));
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(TravelMapSqlMapper.class, () -> maps);
+            context.registerBean(MapPinSqlMapper.class, () -> pins);
+            context.register(MyBatisPublicMapMapper.class);
+            context.refresh();
+            MyBatisPublicMapMapper dataMapper = context.getBean(MyBatisPublicMapMapper.class);
+            assertEquals(List.of(map), dataMapper.findByCityId(cityId));
+            assertEquals(Optional.of(map), dataMapper.findById(mapId));
+            assertEquals(List.of(pin), dataMapper.findPinsByMapId(mapId));
+        }
     }
 
     @Test
@@ -66,11 +73,18 @@ class PublicMapModuleTest {
         CityService cities = Mockito.mock(CityService.class);
         when(dataMapper.findById(mapId)).thenReturn(Optional.of(map));
         when(dataMapper.findPinsByMapId(mapId)).thenReturn(List.of(pin));
-        PublicMapService service = new PublicMapService(dataMapper, cities);
-        assertEquals(new PublicMapDetail(mapId, cityId, map.name(), List.of(pin)), service.get(mapId));
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(PublicMapDataMapper.class, () -> dataMapper);
+            // 模拟服务已由测试创建，直接注册，避免 Spring 再装配其内部依赖。
+            context.getBeanFactory().registerSingleton("cities", cities);
+            context.register(PublicMapService.class);
+            context.refresh();
+            PublicMapService service = context.getBean(PublicMapService.class);
+            assertEquals(new PublicMapDetail(mapId, cityId, map.name(), List.of(pin)), service.get(mapId));
 
-        when(cities.get(cityId)).thenThrow(new ResourceNotFoundException("City not found"));
-        assertThrows(ResourceNotFoundException.class, () -> service.listByCity(cityId));
+            when(cities.get(cityId)).thenThrow(new ResourceNotFoundException("City not found"));
+            assertThrows(ResourceNotFoundException.class, () -> service.listByCity(cityId));
+        }
     }
 
     @Test
@@ -82,16 +96,22 @@ class PublicMapModuleTest {
         when(dataMapper.findByCityId(cityId)).thenReturn(List.of(map));
         when(dataMapper.findById(mapId)).thenReturn(Optional.of(map));
         when(dataMapper.findPinsByMapId(mapId)).thenReturn(List.of(pin));
-        var mvc = MockMvcBuilders.standaloneSetup(new PublicMapController(
-                new PublicMapService(dataMapper, new CityService(cityMapper)))).build();
+        // 使用真实服务装配跨模块依赖，接口断言同时覆盖字段注入是否生效。
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(PublicMapDataMapper.class, () -> dataMapper);
+            context.registerBean(CityDataMapper.class, () -> cityMapper);
+            context.register(PublicMapController.class, PublicMapService.class, CityService.class);
+            context.refresh();
+            var mvc = MockMvcBuilders.standaloneSetup(context.getBean(PublicMapController.class)).build();
 
-        mvc.perform(get("/api/cities/{cityId}/maps", cityId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value(map.name()));
-        mvc.perform(get("/api/maps/{mapId}", mapId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.pins[0].description").value(pin.description()));
-        mvc.perform(get("/api/maps/{mapId}", UUID.randomUUID()))
-                .andExpect(status().isNotFound());
+            mvc.perform(get("/api/cities/{cityId}/maps", cityId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].name").value(map.name()));
+            mvc.perform(get("/api/maps/{mapId}", mapId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.pins[0].description").value(pin.description()));
+            mvc.perform(get("/api/maps/{mapId}", UUID.randomUUID()))
+                    .andExpect(status().isNotFound());
+        }
     }
 }

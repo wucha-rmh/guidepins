@@ -10,18 +10,18 @@ import com.guidepins.publicmap.mapper.mybatis.TravelMapSqlMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 /** 分别读取地图和图钉，再转换为不含数据库内部关联列的接口数据。 */
 @Repository
 public class MyBatisPublicMapMapper implements PublicMapDataMapper {
-    private final TravelMapSqlMapper maps;
-    private final MapPinSqlMapper pins;
 
-    public MyBatisPublicMapMapper(TravelMapSqlMapper maps, MapPinSqlMapper pins) {
-        this.maps = maps;
-        this.pins = pins;
-    }
+    @Autowired
+    private TravelMapSqlMapper maps;
+
+    @Autowired
+    private MapPinSqlMapper pins;
 
     @Override
     public List<PublicMap> findByCityId(UUID cityId) {

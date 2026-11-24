@@ -3,6 +3,7 @@ package com.guidepins.city.controller;
 import com.guidepins.city.domain.City;
 import com.guidepins.city.service.CityService;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,11 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/cities")
 public class CityController {
-    private final CityService cities;
-
-    public CityController(CityService cities) {
-        this.cities = cities;
-    }
+    @Autowired
+    private CityService cities;
 
     @GetMapping
     List<City> list() {

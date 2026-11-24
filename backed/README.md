@@ -21,11 +21,11 @@ Spring Boot 只读服务从 PostgreSQL 读取地市、公共地图和图钉，�
 | GET /api/maps/{mapId} | 地图详情及图钉名称、说明和坐标；地图不存在返回 404 |
 | GET /maps/nanjing/v1/nanjing-z16.pmtiles | 南京底图；Range 请求返回 206，文件不存在返回 404 |
 
-ID 使用 UUID，坐标使用 WGS84（经度在前）。前端从地市接口取得 basemapPath，再请求对应底图地址。
+ID 使用 UUID，坐标使用 WGS84（经度在前）。四张业务表的 UUID 主键已有数据库默认值；当前后端只读，MyBatis 仍配置 `id-type: input`，写接口与主键回填尚未实现。前端从地市接口取得 basemapPath，再请求对应底图地址。
 
 ## 本地运行
 
-需要 Java 25、Maven、已开启的 FinalShell 数据库端口转发，以及按[阶段一数据库文档](../docs/技术/阶段一数据库建库建表.md)准备的数据。从 backed/ 目录运行：
+需要 Java 25、Maven、已开启的 FinalShell 数据库端口转发，以及可访问的现有 `guidepins` 数据库。结构和核对 SQL 见[数据库说明](../docs/技术/数据库说明.md)，无需重新建表或迁移。从 backed/ 目录运行：
 
 ```powershell
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
@@ -45,4 +45,6 @@ curl.exe http://localhost:8080/api/maps/32010000-0000-4000-8000-000000000002
 curl.exe -D - -o NUL -H 'Range: bytes=0-15' http://localhost:8080/maps/nanjing/v1/nanjing-z16.pmtiles
 ```
 
-现有测试按模块组织为四组单元测试，不连接远程数据库；真实数据库和 Range 联调结果见[项目进度](../docs/项目进度.md)。当前表中的地图均按公共地图读取；阶段二引入私人地图前，须增加可见性过滤及权限测试。
+现有测试按模块组织为四组单元测试，不连接远程数据库；真实数据库和 Range 联调结果见[项目进度](../docs/项目进度.md)。远程库已具备账号角色、会话、地图归属和公开状态结构，当前有一个管理员及其公开地图；读取账号已能读取全部五张表，但没有写入权限。
+
+当前接口没有登录、会话或私人地图权限检查，地图查询也没有 `visibility` 过滤。现有数据全部公开不代表接口已能隔离私人地图；开放私人地图创建前，须先实现公共列表过滤、详情与子资源鉴权及权限测试。

@@ -7,16 +7,14 @@ import com.guidepins.city.mapper.mybatis.CitySqlMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 /** 将数据库行转换为接口使用的地市数据，按行政区划代码稳定排序。 */
 @Repository
 public class MyBatisCityMapper implements CityDataMapper {
-    private final CitySqlMapper mapper;
-
-    public MyBatisCityMapper(CitySqlMapper mapper) {
-        this.mapper = mapper;
-    }
+    @Autowired
+    private CitySqlMapper mapper;
 
     @Override
     public List<City> findAll() {

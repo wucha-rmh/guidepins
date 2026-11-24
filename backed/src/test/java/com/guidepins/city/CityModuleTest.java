@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class CityModuleTest {
@@ -42,27 +43,43 @@ class CityModuleTest {
         when(mapper.selectCityById(cityId)).thenReturn(row);
         when(mapper.selectAllCities()).thenReturn(List.of(row));
 
-        MyBatisCityMapper dataMapper = new MyBatisCityMapper(mapper);
-        assertEquals(city, dataMapper.findById(cityId).orElseThrow());
-        assertEquals(List.of(city), dataMapper.findAll());
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(CitySqlMapper.class, () -> mapper);
+            context.register(MyBatisCityMapper.class);
+            context.refresh();
+            MyBatisCityMapper dataMapper = context.getBean(MyBatisCityMapper.class);
+            assertEquals(city, dataMapper.findById(cityId).orElseThrow());
+            assertEquals(List.of(city), dataMapper.findAll());
+        }
     }
 
     @Test
     void reportsMissingCity() {
         CityDataMapper dataMapper = Mockito.mock(CityDataMapper.class);
         when(dataMapper.findById(cityId)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> new CityService(dataMapper).get(cityId));
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(CityDataMapper.class, () -> dataMapper);
+            context.register(CityService.class);
+            context.refresh();
+            assertThrows(ResourceNotFoundException.class, () -> context.getBean(CityService.class).get(cityId));
+        }
     }
 
     @Test
     void returnsCityDirectoryJson() throws Exception {
         CityDataMapper dataMapper = Mockito.mock(CityDataMapper.class);
         when(dataMapper.findAll()).thenReturn(List.of(city));
-        MockMvcBuilders.standaloneSetup(new CityController(new CityService(dataMapper))).build()
-                .perform(get("/api/cities"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].code").value("320100"))
-                .andExpect(jsonPath("$[0].basemapPath").value(city.basemapPath()))
-                .andExpect(jsonPath("$[0].bounds.west").value(118.3));
+        // 由 Spring 注入控制器和服务的依赖，同时保留数据库边界的模拟对象。
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.registerBean(CityDataMapper.class, () -> dataMapper);
+            context.register(CityController.class, CityService.class);
+            context.refresh();
+            MockMvcBuilders.standaloneSetup(context.getBean(CityController.class)).build()
+                    .perform(get("/api/cities"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].code").value("320100"))
+                    .andExpect(jsonPath("$[0].basemapPath").value(city.basemapPath()))
+                    .andExpect(jsonPath("$[0].bounds.west").value(118.3));
+        }
     }
 }
