@@ -10,5 +10,5 @@ import org.apache.ibatis.annotations.Param;
 /** 图钉读取 SQL 定义在 mapper/publicmap/MapPinSqlMapper.xml。 */
 @Mapper
 public interface MapPinSqlMapper extends BaseMapper<MapPinRow> {
-    List<MapPinRow> selectByMap(@Param("mapId") UUID mapId);
+    List<MapPinRow> selectByMap(@Param("mapId") UUID mapId, @Param("viewerId") UUID viewerId);
 }

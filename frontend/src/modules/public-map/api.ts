@@ -1,4 +1,5 @@
 import type { MapPin, PublicMap, PublicMapDetail } from './types'
+import { readApiResponse } from '../../shared/apiResponse'
 
 /** 资源不存在或地址无效；界面据此给出返回入口，而不是“重试”。 */
 export class NotFoundError extends Error {
@@ -43,8 +44,7 @@ export async function listPublicMaps(cityId: string, signal: AbortSignal): Promi
     signal, headers: { Accept: 'application/json' },
   })
   if (response.status === 404) throw new NotFoundError('没有找到这个地市，可能已下线。')
-  if (!response.ok) throw new Error(`公共地图列表请求失败（HTTP ${response.status}），请稍后重试。`)
-  const data: unknown = await response.json()
+  const data = await readApiResponse(response, `公共地图列表请求失败（HTTP ${response.status}），请稍后重试。`)
   if (!Array.isArray(data) || !data.every(isPublicMap)) {
     throw new Error('公共地图数据格式有误，请稍后重试。')
   }
@@ -59,8 +59,7 @@ export async function getPublicMapDetail(mapId: string, signal: AbortSignal): Pr
   if (response.status === 404) throw new NotFoundError('这张公共地图不存在或已下线。')
   // 地址中的 ID 不是合法 UUID 时后端返回 400，属于地址无效而非服务故障。
   if (response.status === 400) throw new NotFoundError('地图地址无效，请从公共地图列表重新打开。')
-  if (!response.ok) throw new Error(`地图详情请求失败（HTTP ${response.status}），请稍后重试。`)
-  const data: unknown = await response.json()
+  const data = await readApiResponse(response, `地图详情请求失败（HTTP ${response.status}），请稍后重试。`)
   if (!isPublicMapDetail(data)) throw new Error('地图详情数据格式有误，请稍后重试。')
   return data
 }

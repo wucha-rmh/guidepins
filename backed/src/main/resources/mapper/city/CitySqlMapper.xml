@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.guidepins.city.mapper.mybatis.CitySqlMapper">
     <resultMap id="cityRow" type="com.guidepins.city.mapper.entity.CityRow">
-        <id property="id" column="id" typeHandler="com.guidepins.config.mybatis.PostgresUuidTypeHandler"/>
+        <id property="id" column="id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
         <result property="code" column="code"/>
         <result property="name" column="name"/>
         <result property="basemapPath" column="basemap_path"/>
@@ -24,6 +24,6 @@
     <select id="selectCityById" resultMap="cityRow">
         SELECT <include refid="cityColumns"/>
         FROM public.city
-        WHERE id = #{id,typeHandler=com.guidepins.config.mybatis.PostgresUuidTypeHandler}
+        WHERE id = #{id,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
     </select>
 </mapper>

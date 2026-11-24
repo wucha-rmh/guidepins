@@ -9,6 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.guidepins.city.controller.CityController;
 import com.guidepins.city.domain.City;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.guidepins.config.ApiResponseAdvice;
+import com.guidepins.exception.ApiExceptionHandler;
 import com.guidepins.city.mapper.entity.CityRow;
 import com.guidepins.city.mapper.mybatis.CitySqlMapper;
 import com.guidepins.city.mapper.CityDataMapper;
@@ -72,14 +75,16 @@ class CityModuleTest {
         // 由 Spring 注入控制器和服务的依赖，同时保留数据库边界的模拟对象。
         try (var context = new AnnotationConfigApplicationContext()) {
             context.registerBean(CityDataMapper.class, () -> dataMapper);
-            context.register(CityController.class, CityService.class);
+            context.registerBean(ObjectMapper.class, () -> new ObjectMapper());
+            context.register(CityController.class, CityService.class, ApiResponseAdvice.class);
             context.refresh();
-            MockMvcBuilders.standaloneSetup(context.getBean(CityController.class)).build()
+            MockMvcBuilders.standaloneSetup(context.getBean(CityController.class))
+                    .setControllerAdvice(context.getBean(ApiResponseAdvice.class), new ApiExceptionHandler()).build()
                     .perform(get("/api/cities"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].code").value("320100"))
-                    .andExpect(jsonPath("$[0].basemapPath").value(city.basemapPath()))
-                    .andExpect(jsonPath("$[0].bounds.west").value(118.3));
+                    .andExpect(jsonPath("$.data[0].code").value("320100"))
+                    .andExpect(jsonPath("$.data[0].basemapPath").value(city.basemapPath()))
+                    .andExpect(jsonPath("$.data[0].bounds.west").value(118.3));
         }
     }
 }

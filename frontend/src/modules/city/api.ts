@@ -1,4 +1,5 @@
 import type { City } from './types'
+import { readApiResponse } from '../../shared/apiResponse'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -18,8 +19,7 @@ function isCity(value: unknown): value is City {
 /** 只负责目录请求与数据契约校验；加载、超时、取消状态由 useCities 管理。 */
 export async function listCities(signal: AbortSignal): Promise<City[]> {
   const response = await fetch('/api/cities', { signal, headers: { Accept: 'application/json' } })
-  if (!response.ok) throw new Error(`地市列表请求失败（HTTP ${response.status}），请稍后重试。`)
-  const data: unknown = await response.json()
+  const data = await readApiResponse(response, `地市列表请求失败（HTTP ${response.status}），请稍后重试。`)
   if (!Array.isArray(data) || !data.every(isCity)) {
     throw new Error('地市数据格式有误，请稍后重试。')
   }

@@ -1,4 +1,4 @@
-package com.guidepins.config.mybatis;
+package com.guidepins.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;

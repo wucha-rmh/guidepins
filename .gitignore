@@ -28,6 +28,8 @@ map/
 
 # 本地项目文案
 docs/
+# 后端接口、数据库接入和验收说明随代码管理。
+!/backed/docs/
 
 #提示词
 AGENTS.md

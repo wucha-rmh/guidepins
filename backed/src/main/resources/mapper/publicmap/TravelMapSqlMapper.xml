@@ -2,24 +2,76 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.guidepins.publicmap.mapper.mybatis.TravelMapSqlMapper">
     <resultMap id="travelMapRow" type="com.guidepins.publicmap.mapper.entity.TravelMapRow">
-        <id property="id" column="id" typeHandler="com.guidepins.config.mybatis.PostgresUuidTypeHandler"/>
-        <result property="cityId" column="city_id" typeHandler="com.guidepins.config.mybatis.PostgresUuidTypeHandler"/>
+        <id property="id" column="id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="cityId" column="city_id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
         <result property="name" column="name"/>
+        <result property="ownerId" column="owner_id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="visibility" column="visibility"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
-    <sql id="mapColumns">id, city_id, name</sql>
+    <sql id="mapColumns">id, city_id, name, owner_id, visibility, created_at, updated_at</sql>
 
     <!-- 仅查询指定地市的公共地图，保持列表顺序稳定。 -->
     <select id="selectByCity" resultMap="travelMapRow">
         SELECT <include refid="mapColumns"/>
         FROM public.travel_map
-        WHERE city_id = #{cityId,typeHandler=com.guidepins.config.mybatis.PostgresUuidTypeHandler}
+        WHERE city_id = #{cityId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND visibility = 'public'
         ORDER BY name, id
     </select>
 
     <select id="selectMapById" resultMap="travelMapRow">
         SELECT <include refid="mapColumns"/>
         FROM public.travel_map
-        WHERE id = #{id,typeHandler=com.guidepins.config.mybatis.PostgresUuidTypeHandler}
+        WHERE id = #{id,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (visibility = 'public'
+               OR owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
+    </select>
+
+    <select id="selectOwnedByCity" resultMap="travelMapRow">
+        SELECT <include refid="mapColumns"/>
+        FROM public.travel_map
+        WHERE city_id = #{cityId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND owner_id = #{ownerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+        ORDER BY updated_at DESC, id
+    </select>
+
+    <!-- 只从正常账号创建；数据库默认生成 UUID 和时间，客户端不能指定所有者。 -->
+    <select id="insertMap" resultMap="travelMapRow" affectData="true" flushCache="true">
+        INSERT INTO public.travel_map (city_id, owner_id, name, visibility)
+        SELECT #{cityId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}, id, #{name}, #{visibility}
+        FROM public.user_account
+        WHERE id = #{ownerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler} AND status = 1
+        RETURNING <include refid="mapColumns"/>
+    </select>
+
+    <!-- 与写入同一条 SQL 校验当前状态和角色，管理员仅可维护他人的公开内容。 -->
+    <select id="updateName" resultMap="travelMapRow" affectData="true" flushCache="true">
+        UPDATE public.travel_map m
+        SET name = #{name},
+            updated_at = CASE WHEN m.name IS DISTINCT FROM #{name} THEN clock_timestamp() ELSE m.updated_at END
+        WHERE m.id = #{id,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1 FROM public.user_account a
+              WHERE a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND a.status = 1
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+        RETURNING <include refid="mapColumns"/>
+    </select>
+
+    <!-- 公开状态仅所有者可修改；无实际变化时保留原更新时间。 -->
+    <select id="updateVisibility" resultMap="travelMapRow" affectData="true" flushCache="true">
+        UPDATE public.travel_map m
+        SET visibility = #{visibility},
+            updated_at = CASE WHEN m.visibility IS DISTINCT FROM #{visibility}
+                              THEN clock_timestamp() ELSE m.updated_at END
+        WHERE m.id = #{id,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND m.owner_id = #{ownerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (SELECT 1 FROM public.user_account a
+                      WHERE a.id = m.owner_id AND a.status = 1)
+        RETURNING <include refid="mapColumns"/>
     </select>
 </mapper>

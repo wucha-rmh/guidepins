@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guidepins.auth.mapper.mybatis.AuthSqlMapper">
+    <resultMap id="account" type="com.guidepins.auth.mapper.entity.AccountRow">
+        <id property="id" column="id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="passwordHash" column="password_hash"/>
+        <result property="role" column="role"/>
+        <result property="avatarPath" column="avatar_path"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="selectByIdentifier" resultMap="account">
+        SELECT id, email, phone, password_hash, role, avatar_path, status, created_at
+        FROM public.user_account
+        WHERE (#{email,jdbcType=VARCHAR} IS NOT NULL AND email = #{email})
+           OR (#{phone,jdbcType=VARCHAR} IS NOT NULL AND phone = #{phone})
+    </select>
+
+    <!-- 固定普通角色，UUID 和创建时间由数据库生成，不接受客户端指定。 -->
+    <select id="insertAccount" resultMap="account" affectData="true" flushCache="true">
+        INSERT INTO public.user_account (email, phone, password_hash)
+        VALUES (#{email}, #{phone}, #{passwordHash})
+        RETURNING id, email, phone, password_hash, role, avatar_path, status, created_at
+    </select>
+
+    <insert id="insertSession">
+        INSERT INTO public.auth_session (token_hash, user_id, created_at, expires_at)
+        SELECT #{tokenHash}, id, #{createdAt}, #{expiresAt}
+        FROM public.user_account
+        WHERE id = #{userId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler} AND status = 1
+    </insert>
+
+    <!-- 每次会话恢复都读取当前角色与状态；过期或禁用立即失效。 -->
+    <select id="selectActiveSession" resultMap="account">
+        SELECT a.id, a.email, a.phone, a.password_hash, a.role, a.avatar_path, a.status, a.created_at
+        FROM public.auth_session s
+        JOIN public.user_account a ON a.id = s.user_id
+        WHERE s.token_hash = #{tokenHash} AND s.expires_at &gt; #{now} AND a.status = 1
+    </select>
+
+    <delete id="deleteSession">
+        DELETE FROM public.auth_session WHERE token_hash = #{tokenHash}
+    </delete>
+
+    <delete id="deleteExpiredSessions">
+        DELETE FROM public.auth_session WHERE expires_at &lt;= #{now}
+    </delete>
+</mapper>

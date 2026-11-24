@@ -33,8 +33,11 @@ npm run preview     # 预览构建，默认端口 4173
 | `src/modules/public-map` | 公共地图和地点的请求、状态、列表与详情 |
 | `src/modules/basemap` | MapLibre／PMTiles 生命周期；`style.ts` 管底图，`views.ts` 管观察点，`pinLayers.ts` 管图钉与气泡 |
 | `src/shared/StatePanel.vue` | 共用加载、空数据、失败及重试提示 |
+| `src/shared/apiResponse.ts` | 校验后端统一的 `code`、`message`、`data`，解包业务数据并展示接口错误信息 |
 
 各业务模块内，`api.ts` 负责请求和数据校验，组合函数负责状态，Vue 组件负责展示与交互。
+
+地市、公共地图列表和详情接口使用 `{code, message, data}`，`code` 必须与 HTTP 状态一致；各模块在解包后继续校验业务数据。资源不存在／地址无效仍使用原有返回入口提示，底图与市界静态资源沿用各自格式。
 
 ## 路由与主要行为
 
