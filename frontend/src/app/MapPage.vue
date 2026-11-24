@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../modules/auth/useAuth'
 import MyMapsPanel from '../modules/map-management/MyMapsPanel.vue'
@@ -7,6 +7,9 @@ import MapSettingsPanel from '../modules/map-management/MapSettingsPanel.vue'
 import { useOwnedMaps } from '../modules/map-management/useOwnedMaps'
 import type { ManagedMap } from '../modules/map-management/types'
 import '../modules/map-management/styles.css'
+import PinEditingPanel from '../modules/pin-editing/PinEditingPanel.vue'
+import { usePinEditing } from '../modules/pin-editing/usePinEditing'
+import '../modules/pin-editing/styles.css'
 import BasemapViewport from '../modules/basemap/BasemapViewport.vue'
 import { useCities } from '../modules/city/useCities'
 import MapDetailPanel from '../modules/public-map/MapDetailPanel.vue'
@@ -35,6 +38,8 @@ const { detail, state: detailState, error: detailError, notFound: detailNotFound
   usePublicMapDetail(() => authState.value === 'ready' ? mapId.value : '', () => user.value?.id ?? '')
 const adminCanRename = computed(() => authState.value === 'ready' && user.value?.role === 'admin' &&
   mapsState.value === 'ready' && maps.value.some((map) => map.id === mapId.value))
+// 本人的地图，或管理员可维护的公开地图；与后端「所有者 或 管理员且公开」一致。
+const canEditPins = computed(() => !!ownedMap.value || adminCanRename.value)
 
 const city = computed(() => cities.value.find((item) => item.id === cityId.value))
 const emptyPins: MapPin[] = []
@@ -49,6 +54,45 @@ const mapMissing = computed(() => mapId.value !== '' &&
 const selectedPinId = ref('')
 const viewport = ref<InstanceType<typeof BasemapViewport> | null>(null)
 watch(() => detail.value?.id, () => { selectedPinId.value = '' })
+
+// 图钉编辑状态集中在这里：地图交互、侧栏表单与详情列表共享同一份草稿。
+const pinEditing = usePinEditing({
+  mapId: () => mapId.value,
+  onSaved: (pin) => {
+    // 写入返回后以服务端结果为准重新读取，图钉顺序与更新时间随之刷新。
+    selectedPinId.value = pin.id
+    void reloadDetail()
+    void owned.refresh()
+  },
+  onDeleted: (pinId) => {
+    if (selectedPinId.value === pinId) selectedPinId.value = ''
+    void reloadDetail()
+    void owned.refresh()
+  },
+})
+const editingPin = computed(() => {
+  const target = pinEditing.target.value
+  if (!target || target.kind !== 'edit') return null
+  return detail.value?.pins.find((pin) => pin.id === target.pinId) ?? null
+})
+
+function editPin(pinId: string) {
+  const pin = detail.value?.pins.find((item) => item.id === pinId)
+  if (!pin) return
+  selectedPinId.value = pin.id
+  pinEditing.startEditing(pin)
+}
+
+// 地图被切换、关闭或失去编辑权限时，放弃未保存的草稿，避免误写到另一张地图。
+watch(() => detail.value?.id, () => { pinEditing.cancel() })
+watch(canEditPins, (allowed) => { if (!allowed) pinEditing.cancel() })
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || pinEditing.phase.value === 'idle') return
+  pinEditing.cancel()
+}
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 const sidebarCollapsed = ref(false)
 const sidebar = ref<HTMLElement | null>(null)
@@ -143,8 +187,13 @@ function focusPin(pinId: string) {
         </StatePanel>
         <MapSettingsPanel v-else-if="detail && (ownedMap || adminCanRename)" :key="`${detail.id}:${user?.id}`" :map="detail" :owned="ownedMap"
           :admin-can-rename="adminCanRename" @updated="updatedMap" />
+        <PinEditingPanel v-if="canEditPins && detail" :phase="pinEditing.phase.value" :target="pinEditing.target.value"
+          :coordinates="pinEditing.coordinates.value" :initial="editingPin" :busy="pinEditing.busy.value"
+          :error="pinEditing.error.value" :notice="pinEditing.notice.value"
+          @place="pinEditing.startPlacing" @cancel="pinEditing.cancel"
+          @save="(values) => pinEditing.save(values.name, values.description)" @delete="pinEditing.remove" />
         <MapDetailPanel v-if="mapId && !mapMissing && authState === 'ready'" :detail="detail" :state="detailState" :error="detailError"
-          :selected-pin-id="selectedPinId" @retry="reloadDetail" @select-pin="focusPin" />
+          :selected-pin-id="selectedPinId" :editable="canEditPins" @retry="reloadDetail" @select-pin="focusPin" @edit-pin="editPin" />
         <div v-if="!mapId" class="sidebar-note"><span class="sidebar-note-mark" aria-hidden="true">⌖</span><h3>先随意逛逛，也很好。</h3><p>拖动地图发现街巷，或选一张地图，沿着地点慢慢探索。</p></div>
       </aside>
       <button ref="sidebarToggle" class="sidebar-toggle" type="button" :aria-expanded="!sidebarCollapsed" aria-controls="map-sidebar"
@@ -153,7 +202,9 @@ function focusPin(pinId: string) {
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m14 6-6 6 6 6" /></svg>
       </button>
       <BasemapViewport ref="viewport" :key="city.id" :city="city" :pins="pins"
-        :selected-pin-id="selectedPinId" @select-pin="selectPin" />
+        :selected-pin-id="selectedPinId" :draft-pin="pinEditing.coordinates.value"
+        :placing="pinEditing.phase.value === 'placing'"
+        @select-pin="selectPin" @pick="pinEditing.placeAt" @move-draft="pinEditing.moveTo" />
     </div>
   </div>
 </template>

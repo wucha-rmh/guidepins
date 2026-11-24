@@ -41,6 +41,21 @@ export function useOwnedMaps(cityId: () => string) {
     }
   }
 
+  /**
+   * 图钉写入会推进地图更新时间：只替换数据、不切换到加载态，
+   * 避免正在显示的编辑表单和成功反馈被卸载。失败时保留原列表。
+   */
+  async function refresh() {
+    const ownerId = auth.user.value?.id
+    const city = cityId()
+    if (!ownerId || !city || auth.state.value !== 'ready' || state.value !== 'ready') return
+    try {
+      maps.value = await listOwnedMaps(city, ownerId, new AbortController().signal)
+    } catch {
+      // 更新时间只是辅助信息，读取失败不打扰当前操作。
+    }
+  }
+
   watch([cityId, () => auth.user.value?.id, () => auth.state.value], () => { void reload() }, { immediate: true, flush: 'sync' })
   onScopeDispose(reset)
 
@@ -51,5 +66,5 @@ export function useOwnedMaps(cityId: () => string) {
     maps.value = [...maps.value.filter((item) => item.id !== map.id), map].sort((a, b) =>
       Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || a.id.localeCompare(b.id))
   }
-  return { maps: computed(() => maps.value), state, error, reload, applyMap }
+  return { maps: computed(() => maps.value), state, error, reload, refresh, applyMap }
 }

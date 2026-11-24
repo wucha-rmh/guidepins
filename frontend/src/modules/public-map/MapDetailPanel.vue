@@ -8,8 +8,10 @@ defineProps<{
   state: RemoteState
   error: string
   selectedPinId: string
+  /** 当前身份可以维护这张地图的图钉时，列表给出编辑入口。 */
+  editable?: boolean
 }>()
-defineEmits<{ retry: []; selectPin: [pinId: string] }>()
+defineEmits<{ retry: []; selectPin: [pinId: string]; editPin: [pinId: string] }>()
 </script>
 
 <template>
@@ -24,7 +26,7 @@ defineEmits<{ retry: []; selectPin: [pinId: string] }>()
       <template v-else>
         <p class="panel-description">编号对应地图上的地点，点选可查看详情</p>
         <ol class="pin-list" aria-label="图钉列表">
-          <li v-for="(pin, index) in detail.pins" :key="pin.id">
+          <li v-for="(pin, index) in detail.pins" :key="pin.id" class="pin-row">
             <button type="button" class="pin-item" :class="{ 'pin-item--selected': pin.id === selectedPinId }"
               :aria-pressed="pin.id === selectedPinId" @click="$emit('selectPin', pin.id)">
               <span class="pin-index" aria-hidden="true">{{ index + 1 }}</span>
@@ -33,6 +35,8 @@ defineEmits<{ retry: []; selectPin: [pinId: string] }>()
                 <span v-if="pin.description" class="pin-description">{{ pin.description }}</span>
               </span>
             </button>
+            <button v-if="editable" type="button" class="pin-item-edit"
+              :aria-label="`编辑地点 ${index + 1}：${pin.name}`" @click="$emit('editPin', pin.id)">编辑</button>
           </li>
         </ol>
       </template>

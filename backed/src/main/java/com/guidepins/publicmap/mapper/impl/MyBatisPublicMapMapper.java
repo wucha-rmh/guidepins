@@ -65,6 +65,41 @@ public class MyBatisPublicMapMapper implements PublicMapDataMapper {
                 .map(MyBatisPublicMapMapper::toManagedMap);
     }
 
+    @Override
+    public Optional<MapPin> findPin(UUID mapId, UUID pinId, UUID viewerId) {
+        return Optional.ofNullable(pins.selectPin(mapId, pinId, viewerId)).map(MyBatisPublicMapMapper::toPin);
+    }
+
+    @Override
+    public Optional<MapPin> insertPin(UUID mapId, UUID actorId, String name, String description,
+                                      double longitude, double latitude) {
+        MapPinRow row = pins.insertPin(mapId, actorId, name, description, longitude, latitude);
+        if (row == null) {
+            return Optional.empty();
+        }
+        // 新增总会改变地图内容：先写入图钉，再推进地图更新时间。
+        pins.touchMap(mapId, actorId);
+        return Optional.of(toPin(row));
+    }
+
+    @Override
+    public Optional<MapPin> updatePin(UUID mapId, UUID pinId, UUID actorId, String name, String description,
+                                      double longitude, double latitude) {
+        // 更新时间判断需要旧值，因此必须在图钉更新之前执行；失败时由事务整体回滚。
+        pins.touchMapOnPinChange(mapId, pinId, actorId, name, description, longitude, latitude);
+        return Optional.ofNullable(pins.updatePin(mapId, pinId, actorId, name, description, longitude, latitude))
+                .map(MyBatisPublicMapMapper::toPin);
+    }
+
+    @Override
+    public boolean deletePin(UUID mapId, UUID pinId, UUID actorId) {
+        if (pins.deletePin(mapId, pinId, actorId) == null) {
+            return false;
+        }
+        pins.touchMap(mapId, actorId);
+        return true;
+    }
+
     private static ManagedMap toManagedMap(TravelMapRow row) {
         return new ManagedMap(row.getId(), row.getCityId(), row.getName(), row.getOwnerId(), row.getVisibility(),
                 row.getCreatedAt(), row.getUpdatedAt());

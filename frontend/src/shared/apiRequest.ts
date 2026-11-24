@@ -1,7 +1,7 @@
 import { readApiResponse } from './apiResponse'
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH'
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   body?: unknown
   signal?: AbortSignal
 }

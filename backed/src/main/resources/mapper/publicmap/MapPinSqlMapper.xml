@@ -10,14 +10,119 @@
         <result property="latitude" column="latitude"/>
     </resultMap>
 
+    <sql id="pinColumns">p.id, p.map_id, p.name, p.description, p.longitude, p.latitude</sql>
+    <!-- INSERT 的 RETURNING 没有表别名，另列一份不带前缀的字段清单。 -->
+    <sql id="returnedPinColumns">id, map_id, name, description, longitude, latitude</sql>
+
     <!-- 地图详情只读取所属图钉，名称与 UUID 决定稳定顺序。 -->
     <select id="selectByMap" resultMap="mapPinRow">
-        SELECT p.id, p.map_id, p.name, p.description, p.longitude, p.latitude
+        SELECT <include refid="pinColumns"/>
         FROM public.map_pin p
         JOIN public.travel_map m ON m.id = p.map_id
         WHERE p.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
           AND (m.visibility = 'public'
                OR m.owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
         ORDER BY p.name, p.id
+    </select>
+
+    <!-- 单条图钉读取同样关联地图校验可见性，供写入失败后区分 403 与 404。 -->
+    <select id="selectPin" resultMap="mapPinRow">
+        SELECT <include refid="pinColumns"/>
+        FROM public.map_pin p
+        JOIN public.travel_map m ON m.id = p.map_id
+        WHERE p.id = #{pinId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND p.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (m.visibility = 'public'
+               OR m.owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
+    </select>
+
+    <!-- 新增图钉：所有者可写自己的地图，管理员可维护他人的公开地图，私有地图仍拒绝。 -->
+    <select id="insertPin" resultMap="mapPinRow" affectData="true" flushCache="true">
+        INSERT INTO public.map_pin (map_id, name, description, longitude, latitude)
+        SELECT m.id, #{name}, #{description,jdbcType=VARCHAR}, #{longitude}, #{latitude}
+        FROM public.travel_map m
+        WHERE m.id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1 FROM public.user_account a
+              WHERE a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND a.status = 1
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+        RETURNING <include refid="returnedPinColumns"/>
+    </select>
+
+    <!-- 修改图钉：图钉必须属于该地图，权限条件与新增一致。 -->
+    <select id="updatePin" resultMap="mapPinRow" affectData="true" flushCache="true">
+        UPDATE public.map_pin p
+        SET name = #{name},
+            description = #{description,jdbcType=VARCHAR},
+            longitude = #{longitude},
+            latitude = #{latitude}
+        WHERE p.id = #{pinId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND p.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1 FROM public.travel_map m
+              JOIN public.user_account a
+                ON a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+              WHERE m.id = p.map_id
+                AND a.status = 1
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+        RETURNING <include refid="pinColumns"/>
+    </select>
+
+    <!-- 删除图钉：只返回被删除的编号，权限判断与修改相同。 -->
+    <select id="deletePin" resultType="java.util.UUID" affectData="true" flushCache="true">
+        DELETE FROM public.map_pin p
+        WHERE p.id = #{pinId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND p.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1 FROM public.travel_map m
+              JOIN public.user_account a
+                ON a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+              WHERE m.id = p.map_id
+                AND a.status = 1
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+        RETURNING p.id
+    </select>
+
+    <!-- 图钉内容确实变化时才推进地图更新时间；必须在图钉更新前执行才能读到旧值。
+         PostgreSQL 的 UPDATE 只有带 RETURNING 才会产生结果集，MyBatis 以 select 执行时
+         没有结果行会得到 null，因此这里返回一行常量并由上层忽略。 -->
+    <select id="touchMapOnPinChange" resultType="java.lang.Integer" affectData="true" flushCache="true">
+        UPDATE public.travel_map m
+        SET updated_at = clock_timestamp()
+        WHERE m.id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1 FROM public.map_pin p
+              WHERE p.id = #{pinId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND p.map_id = m.id
+                AND (p.name IS DISTINCT FROM #{name}
+                     OR p.description IS DISTINCT FROM #{description,jdbcType=VARCHAR}
+                     OR p.longitude IS DISTINCT FROM #{longitude}
+                     OR p.latitude IS DISTINCT FROM #{latitude})
+          )
+          AND EXISTS (
+              SELECT 1 FROM public.user_account a
+              WHERE a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND a.status = 1
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+        RETURNING 1
+    </select>
+
+    <!-- 新增或删除图钉总会改变地图内容，成功写入后直接推进更新时间。 -->
+    <select id="touchMap" resultType="java.lang.Integer" affectData="true" flushCache="true">
+        UPDATE public.travel_map m
+        SET updated_at = clock_timestamp()
+        WHERE m.id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1 FROM public.user_account a
+              WHERE a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND a.status = 1
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+        RETURNING 1
     </select>
 </mapper>

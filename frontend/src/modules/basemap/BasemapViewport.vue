@@ -5,6 +5,7 @@ import StatePanel from '../../shared/StatePanel.vue'
 import type { City } from '../city/types'
 import type { MapPin } from '../public-map/types'
 import { createBasemap } from './createBasemap'
+import type { DraftPoint } from './pinLayers'
 
 const props = defineProps<{
   city: City
@@ -12,8 +13,16 @@ const props = defineProps<{
   pins: MapPin[]
   /** 选中的图钉，与侧栏列表共用同一份状态。 */
   selectedPinId: string
+  /** 编辑中的草稿位置；为空时只显示选中图钉。 */
+  draftPin: DraftPoint | null
+  /** 放置新图钉模式：点空白处取点，光标改为十字。 */
+  placing: boolean
 }>()
-const emit = defineEmits<{ selectPin: [pinId: string] }>()
+const emit = defineEmits<{
+  selectPin: [pinId: string]
+  pick: [point: DraftPoint]
+  moveDraft: [point: DraftPoint]
+}>()
 
 const container = ref<HTMLElement | null>(null)
 const state = ref<'loading' | 'ready' | 'error'>('loading')
@@ -33,10 +42,14 @@ function load() {
       failed: (message) => { error.value = message; state.value = 'error' },
       moved: (value) => { zoom.value = value },
       pinSelected: (pinId) => emit('selectPin', pinId),
+      mapPicked: (point) => emit('pick', point),
+      draftMoved: (point) => emit('moveDraft', point),
     })
     // 重试加载后立即恢复已有图钉，避免底图与侧栏短暂不一致。
     basemap.setPins(props.pins, props.selectedPinId)
     basemap.fitPins(props.pins)
+    basemap.setDraftPin(props.draftPin)
+    basemap.setPicking(props.placing)
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '底图初始化失败，请重试。'
     state.value = 'error'
@@ -49,6 +62,8 @@ watch(() => props.pins, (pins) => {
   basemap?.fitPins(pins)
 })
 watch(() => props.selectedPinId, (selectedPinId) => basemap?.setPins(props.pins, selectedPinId))
+watch(() => props.draftPin, (draftPin) => basemap?.setDraftPin(draftPin))
+watch(() => props.placing, (placing) => basemap?.setPicking(placing))
 
 function flyToPin(pinId: string) {
   basemap?.flyToPin(pinId)
@@ -73,6 +88,9 @@ onScopeDispose(() => basemap?.destroy())
       <button class="button button--secondary" type="button" :disabled="state !== 'ready'"
         @click="basemap?.fitCity()">查看全市</button>
     </div>
+    <p v-if="placing && state === 'ready'" class="map-placing-hint" role="status">
+      点击地图放置新图钉 · 按 Esc 取消
+    </p>
     <div v-if="state !== 'ready'" class="basemap-state">
       <StatePanel :kind="state" :title="state === 'loading' ? '正在加载底图' : '底图加载失败'"
         :description="state === 'loading' ? '正在读取地图，请稍候。' : error" retry-label="重试加载底图" @retry="load" />

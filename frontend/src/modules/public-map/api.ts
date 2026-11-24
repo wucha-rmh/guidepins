@@ -22,7 +22,8 @@ function isPublicMap(value: unknown): value is PublicMap {
     isNonEmptyString(value.cityId) && isNonEmptyString(value.name)
 }
 
-function isMapPin(value: unknown): value is MapPin {
+/** 图钉形状校验与写入接口共用，避免编辑模块复制一套可能走样的校验。 */
+export function isMapPin(value: unknown): value is MapPin {
   if (!isRecord(value) || !isNonEmptyString(value.id) || !isNonEmptyString(value.name)) return false
   // 说明允许为空，但出现时必须是字符串，避免把模板内容直接注入界面。
   if (value.description !== null && typeof value.description !== 'string') return false

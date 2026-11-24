@@ -8,7 +8,7 @@ import { FetchSource, PMTiles, Protocol } from 'pmtiles'
 import boundaryUrl from './nanjing-boundary.json?url'
 import type { City } from '../city/types'
 import type { MapPin } from '../public-map/types'
-import { createPinOverlay } from './pinLayers'
+import { createPinOverlay, type DraftPoint } from './pinLayers'
 import { createBasemapStyle } from './style'
 import { urbanViewFor } from './views'
 
@@ -21,6 +21,10 @@ interface BasemapEvents {
   moved: (zoom: number) => void
   /** 点击图钉或被点击空白处清空选中时回调，空串表示清空。 */
   pinSelected: (pinId: string) => void
+  /** 放置模式下点选空白处，回传该处坐标。 */
+  mapPicked: (point: DraftPoint) => void
+  /** 拖动编辑草稿时回传新坐标。 */
+  draftMoved: (point: DraftPoint) => void
 }
 
 function failureMessage(cause: unknown): string {
@@ -113,7 +117,11 @@ export function createBasemap(container: HTMLElement, city: City, events: Basema
   map.on('zoom', () => { if (!disposed) events.moved(map.getZoom()) })
   map.on('webglcontextlost', () => fail('地图绘制已中断，请重试加载底图。'))
   // 图钉图层要等样式加载完成才能添加；此前收到的图钉由 overlay 自行保存。
-  const pinOverlay = createPinOverlay(map, (pinId) => { if (!disposed) events.pinSelected(pinId) })
+  const pinOverlay = createPinOverlay(map, {
+    onPinSelect: (pinId) => { if (!disposed) events.pinSelected(pinId) },
+    onMapPick: (point) => { if (!disposed) events.mapPicked(point) },
+    onDraftMove: (point) => { if (!disposed) events.draftMoved(point) },
+  })
   /** 市界遮罩只是低缩放级别下的观感参考，取不到数据就保持无遮罩，不影响底图可用。 */
   async function loadBoundary() {
     try {
@@ -146,6 +154,14 @@ export function createBasemap(container: HTMLElement, city: City, events: Basema
     setPins(nextPins: MapPin[], selectedId: string) {
       currentPins = nextPins
       pinOverlay.update(nextPins, selectedId)
+    },
+    /** 编辑中的草稿位置；传 null 清除虚线圆环。 */
+    setDraftPin(nextDraft: DraftPoint | null) {
+      pinOverlay.setDraft(nextDraft)
+    },
+    /** 放置新图钉时启用点选取点与十字光标。 */
+    setPicking(enabled: boolean) {
+      pinOverlay.setPicking(enabled)
     },
     /** 打开公共地图时把视野收到图钉范围；没有图钉时保持地市范围。 */
     fitPins(nextPins: MapPin[]) {

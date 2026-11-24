@@ -1,4 +1,4 @@
--- 仅用于独立本地测试库；运行账号无建表、改表、改角色或图钉写入权限。
+-- 仅用于独立本地测试库；运行账号无建表、改表、改角色权限，图钉写入按阶段三授权，其余表保持最小授权。
 CREATE TABLE public.city (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     code text NOT NULL UNIQUE CHECK (code ~ '^[0-9]{6}$'),
@@ -97,3 +97,5 @@ GRANT INSERT (email, phone, password_hash) ON public.user_account TO guidepins_a
 GRANT INSERT (token_hash, user_id, created_at, expires_at), DELETE ON public.auth_session TO guidepins_app;
 GRANT INSERT (city_id, owner_id, name, visibility), UPDATE (name, visibility, updated_at)
     ON public.travel_map TO guidepins_app;
+-- 阶段三图钉编辑只放开 map_pin 的整表写入；权限条件仍由 SQL 语句校验。
+GRANT INSERT, UPDATE, DELETE ON public.map_pin TO guidepins_app;

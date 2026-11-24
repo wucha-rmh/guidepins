@@ -298,7 +298,7 @@ class StageTwoBackendIntegrationTest {
                     "DELETE FROM public.travel_map",
                     "UPDATE public.travel_map SET owner_id = gen_random_uuid()",
                     "UPDATE public.city SET name = '修改地市'",
-                    "INSERT INTO public.map_pin (map_id,name,longitude,latitude) VALUES (gen_random_uuid(),'越权',0,0)"
+                    "TRUNCATE public.map_pin"
             }) {
                 SQLException error = assertThrows(SQLException.class, () -> connection.createStatement().execute(forbidden));
                 assertEquals("42501", error.getSQLState());
