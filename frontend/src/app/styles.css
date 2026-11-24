@@ -1,117 +1,207 @@
-/* PC 页面基础样式：只负责页面布局与通用视觉，不包含业务状态。 */
+/* 城市手帐主题：仅负责页面呈现，数据请求与地图行为由各功能模块维护。 */
 :root {
   font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
-  color: #223735;
-  background: #f5f8f8;
+  color: #293d35;
+  background: #f7f7f2;
   font-size: 16px;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --accent: #176c60;
-  --muted: #667977;
-  --line: #dce6e3;
+  --accent: #315f4e;
+  --accent-soft: #edf2e9;
+  --terracotta: #b87550;
+  --muted: #758075;
+  --line: #e2e6dc;
+  --paper: #fffefa;
+  --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 1100px; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; cursor: pointer; }
 button, a { -webkit-tap-highlight-color: transparent; }
-button:focus-visible, a:focus-visible { outline: 3px solid #248e7e; outline-offset: 4px; }
+button:focus-visible, a:focus-visible { outline: 3px solid #729783; outline-offset: 3px; }
+button:disabled { cursor: default; }
 h1, h2, h3, h4, p { margin: 0; }
-.muted { color: var(--muted); font-size: .875rem; }
-.site-header { height: 80px; padding: 0 40px; display: flex; align-items: center; gap: 28px; border-bottom: 1px solid var(--line); background: white; }
-.brand { display: inline-flex; align-items: center; gap: 12px; font-size: 1.375rem; font-weight: 700; letter-spacing: .06em; }
-.brand-mark { display: grid; place-items: center; width: 40px; height: 40px; color: white; background: var(--accent); border-radius: 13px 13px 13px 3px; font-size: 1.125rem; }
-.header-caption { flex: 1; color: var(--muted); font-size: .875rem; }
-.tag { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 6px; background: #edf4f1; color: #38645b; font-size: .875rem; font-weight: 400; }
-.skip-link { position: absolute; top: -100px; left: 20px; z-index: 10; background: white; padding: 12px; }
-.skip-link:focus { top: 10px; }
-.city-page { max-width: 1280px; margin: auto; padding: 64px 56px 28px; }
-.eyebrow { color: var(--accent); font-size: .875rem; letter-spacing: .05em; }
-.city-intro h1 { font-size: 3.25rem; font-weight: 650; line-height: 1.28; letter-spacing: -.04em; margin: 18px 0; }
-.city-intro p { color: var(--muted); line-height: 1.8; }
-.city-directory { margin-top: 48px; }
-.section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.section-heading h2 { font-size: 1.25rem; }
-.city-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-.city-card { overflow: hidden; background: white; border: 1px solid var(--line); border-radius: 14px; transition: border-color .15s, box-shadow .15s; }
-.city-card:hover { border-color: #79a99b; box-shadow: 0 8px 24px #244c3f0c; }
-.city-card-art { height: 150px; background: #e0eeea; position: relative; overflow: hidden; }
-.city-art-orbit { position: absolute; width: 240px; height: 240px; border: 30px solid #c4ded5; border-radius: 50%; right: -44px; top: -50px; transform: scaleX(1.2) rotate(-25deg); }
-.city-art-orbit::after { content: ''; position: absolute; inset: 20px; border: 1px solid #a7c9bb; border-radius: 50%; }
-.city-art-name { position: absolute; bottom: 20px; left: 25px; color: #306559; font-size: 2.125rem; letter-spacing: .14em; font-weight: 600; }
-.city-art-pin { position: absolute; z-index: 1; right: 85px; top: 50px; width: 26px; height: 26px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2d7a66; box-shadow: 0 4px 15px #2d7a6624; }
-.city-art-pin::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: white; }
-.city-card-content { padding: 22px 24px; }
-.city-card-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.city-card h3 { font-size: 1.25rem; }
-.city-card-content p { margin-top: 10px; font-size: .875rem; color: var(--muted); }
-.city-card-action { display: inline-block; margin-top: 24px; color: var(--accent); font-size: .875rem; font-weight: 600; }
-.page-footnote { margin-top: 38px; color: var(--muted); font-size: .875rem; }
-.button { display: inline-flex; justify-content: center; align-items: center; padding: 9px 16px; min-height: 40px; border: 1px solid transparent; border-radius: 7px; font-size: .875rem; }
-.button--primary { color: white; background: var(--accent); }
-.button--primary:hover { background: #12574d; }
-.button--secondary { color: #315c51; border-color: #c6d8d1; background: white; }
-.button--secondary:hover { background: #edf5f1; }
-.state-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 40px 20px; min-height: 260px; }
-.city-directory > .state-panel { background: white; border: 1px solid var(--line); border-radius: 12px; }
-.state-panel h2 { font-size: 1.125rem; line-height: 1.5; }
-.state-panel p { max-width: 360px; color: var(--muted); font-size: .875rem; line-height: 1.8; }
-.state-symbol { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #c6d7cf; border-radius: 50%; color: #638475; font-size: 1.125rem; }
-.state-panel--error .state-symbol { background: #fff2ec; border-color: #edd1c3; color: #a64d29; }
-.state-symbol--loading { width: 30px; height: 30px; border: 3px solid #d8e6e0; border-top-color: var(--accent); animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-.map-page { padding: 0 28px 24px; }
-.map-page-heading { height: 78px; display: flex; align-items: center; justify-content: space-between; }
-.map-heading-title { display: flex; align-items: center; gap: 20px; }
-.map-heading-title h1 { font-size: 1.375rem; }
-.heading-divider { height: 22px; width: 1px; background: var(--line); }
-.text-link { color: var(--accent); font-size: .875rem; }
+.muted { color: var(--muted); font-size: .8125rem; }
+.text-link { color: var(--accent); font-size: .8125rem; }
 .text-link:hover { text-decoration: underline; }
-.map-workspace { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 560px; height: calc(100dvh - 182px); overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; }
-.map-sidebar { overflow-y: auto; border-right: 1px solid var(--line); }
-.public-map-panel, .map-detail-panel { padding: 24px; }
-.panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
-.panel-heading h2 { font-size: 1rem; }
-.panel-description { font-size: .875rem; color: var(--muted); line-height: 1.8; }
-.public-map-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 12px; }
-.public-map-card { display: block; border: 1px solid var(--line); border-radius: 9px; padding: 16px 18px; }
-.public-map-card:hover { border-color: #86b4a4; }
-.public-map-card--selected { border-color: #599f86; background: #f0f7f3; }
-.public-map-card h3 { font-size: 1.0625rem; }
-.public-map-card-action { display: block; margin-top: 10px; color: var(--accent); font-size: .8125rem; }
+.section-kicker { display: block; color: #879180; font-size: .625rem; font-weight: 500; letter-spacing: .16em; line-height: 1.8; }
+
+/* 全局导航用紧凑字标与留白建立品牌层次，保留唯一真实的城市目录入口。 */
+.site-header { height: 68px; display: flex; align-items: center; gap: 28px; padding: 0 36px; border-bottom: 1px solid var(--line); background: var(--paper); }
+.brand { display: inline-flex; align-items: center; flex-shrink: 0; gap: 12px; }
+.brand-mark { display: grid; place-items: center; width: 31px; height: 35px; border: 1.5px solid var(--accent); border-radius: 14px 14px 14px 3px; transform: rotate(-8deg); }
+.brand-mark span { width: 9px; height: 9px; border: 2px solid var(--accent); border-radius: 50%; }
+.brand-wordmark { display: grid; gap: 2px; font-size: 1.0625rem; font-weight: 650; letter-spacing: .1em; line-height: 1.3; }
+.brand-wordmark small { font-family: Arial, sans-serif; color: #84907d; font-size: .5rem; font-weight: 400; letter-spacing: .24em; }
+.header-caption { flex: 1; padding-left: 26px; border-left: 1px solid var(--line); color: #8a9383; font-size: .75rem; }
+.header-nav { display: flex; align-items: center; gap: 30px; font-size: .8125rem; }
+.header-nav a { display: inline-flex; align-items: center; gap: 17px; min-height: 40px; }
+.header-nav a:hover, .header-nav a[aria-current="page"] { color: var(--accent); }
+.header-nav a span { color: #8a9a82; font-size: 1rem; }
+.header-note { color: #89917f; font-size: .6875rem; }
+.skip-link { position: fixed; top: -100px; left: 20px; z-index: 20; padding: 12px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.skip-link:focus { top: 12px; }
+
+/* 首页兼顾单城市和多城市：少量入口使用横向卡片，避免空白三列布局。 */
+.city-page { display: flex; flex-direction: column; max-width: 1280px; min-height: calc(100dvh - 68px); margin: auto; padding: 42px 56px 22px; }
+.city-hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; gap: 30px; min-height: 300px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: .6875rem; letter-spacing: .07em; }
+.eyebrow > span { width: 17px; height: 1px; background: var(--terracotta); }
+.city-intro h1 { margin: 19px 0 18px; font-family: var(--serif); font-size: clamp(2.8rem, 4.1vw, 3.5rem); line-height: 1.35; font-weight: 500; letter-spacing: .025em; }
+.city-intro h1 em { position: relative; color: var(--accent); font-style: normal; }
+.city-intro h1 em::after { content: ''; position: absolute; left: 1px; right: 3px; bottom: -5px; height: 2px; border-radius: 50%; background: #c7a17d; transform: rotate(-1deg); }
+.city-intro > p { color: var(--muted); font-size: .8125rem; line-height: 1.9; }
+.journey-steps { display: flex; flex-wrap: wrap; gap: 25px; margin-top: 26px; color: #6a7869; font-size: .6875rem; }
+.journey-steps i { margin-right: 4px; color: #a8ae9e; font-family: Georgia, serif; font-size: .8125rem; font-style: normal; }
+.journey-art { position: relative; width: 100%; max-width: 500px; justify-self: end; padding: 16px 0 22px; }
+.journey-art > svg { display: block; width: 100%; height: auto; }
+.art-land { fill: #eff1e7; }
+.art-contour { stroke: #d9dfcf; stroke-width: 1; }
+.art-river { stroke: #d0dfdc; stroke-width: 27; }
+.art-streets { stroke: #fffefa; stroke-width: 7; stroke-linejoin: round; }
+.art-streets > path + path { stroke-width: 3; }
+.art-route { stroke: #ae7f5f; stroke-width: 2; stroke-dasharray: 4 6; stroke-linecap: round; }
+.art-stops { fill: #fffefa; stroke: #6e8a6f; stroke-width: 2; }
+.art-destination-halo { fill: #b8755015; }
+.art-destination { fill: #b87550; stroke: #fffefa; stroke-width: 3; }
+.art-coordinate { position: absolute; top: 7px; left: 36px; color: #97a28d; font: .5625rem/1.5 Arial, sans-serif; letter-spacing: .22em; }
+.art-note { position: absolute; right: 26px; bottom: 8px; display: flex; align-items: center; gap: 9px; color: #6a7b63; font-family: var(--serif); font-size: .875rem; letter-spacing: .12em; }
+.art-note > span { width: 24px; height: 1px; background: #bec9b1; }
+.art-compass { position: absolute; top: 21px; right: 20px; text-align: center; color: #86947a; font: .5625rem/1.7 Georgia, serif; }
+.art-compass > span { font-size: 1.25rem; }
+.city-directory { margin-top: 35px; }
+.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+.section-heading h2 { margin-top: 3px; font-size: 1.125rem; font-weight: 550; }
+.directory-count { display: flex; align-items: center; gap: 18px; color: #838e7b; font-size: .6875rem; }
+.directory-count > span { font-size: 1.25rem; }
+.city-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.city-grid--single { grid-template-columns: minmax(0, 1fr); }
+.city-card { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 17px; padding: 18px 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); transition: border-color .18s, box-shadow .18s, transform .18s; }
+.city-card:hover { border-color: #a1b79b; box-shadow: 0 8px 24px #3e50320a; transform: translateY(-2px); }
+.city-card-art { grid-row: 1 / 3; }
+.city-card-art svg { display: block; width: 100%; }
+.card-map-land { fill: #edf1e6; stroke: #dce3d3; }
+.card-map-street { stroke: #fffefa; stroke-width: 6; }
+.card-map-route { stroke: #94a88a; stroke-width: 1.5; stroke-dasharray: 4 4; }
+.card-map-dot { fill: var(--terracotta); stroke: var(--paper); stroke-width: 3; }
+.city-card-content { min-width: 0; }
+.city-card-kicker { color: #7c8c72; font-size: .625rem; letter-spacing: .1em; }
+.city-card-kicker > span { margin-left: 9px; color: #a4ad9a; font-family: Georgia, serif; }
+.city-card h3 { margin-top: 7px; font-family: var(--serif); font-size: 1.625rem; line-height: 1.45; font-weight: 500; overflow-wrap: anywhere; }
+.city-card-content p { margin-top: 7px; color: var(--muted); font-size: .75rem; line-height: 1.8; }
+.city-card-action { display: flex; align-items: center; gap: 13px; align-self: end; justify-self: start; color: var(--accent); font-size: .75rem; }
+.city-card-arrow { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid #d8e2d0; border-radius: 50%; font-size: .9375rem; transition: background .18s, color .18s; }
+.city-card:hover .city-card-arrow { color: var(--paper); background: var(--accent); border-color: var(--accent); }
+.city-grid--single .city-card { grid-template-columns: 160px minmax(0, 1fr) auto; gap: 30px; padding: 15px 34px 15px 22px; }
+.city-grid--single .city-card-art { grid-row: auto; }
+.city-grid--single .city-card h3 { font-size: 1.9375rem; }
+.city-grid--single .city-card-action { align-self: center; }
+.city-grid--single .city-card-arrow { width: 38px; height: 38px; }
+.page-footnote { display: flex; justify-content: space-between; gap: 20px; margin-top: auto; padding-top: 32px; color: #8f9886; font-size: .625rem; letter-spacing: .03em; }
+.footer-dot { margin: 0 11px; }
+
+/* 轻量通用控件与反馈，状态仍由原有模块独立维护。 */
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 37px; padding: 8px 14px; border: 1px solid transparent; border-radius: 8px; font-size: .75rem; line-height: 1.5; transition: background .16s, border-color .16s; }
+.button--primary { color: var(--paper); background: var(--accent); }
+.button--primary:hover { background: #274f3f; }
+.button--secondary { color: #53694f; border-color: #dce3d5; background: var(--paper); }
+.button--secondary:hover { background: #eff3e9; border-color: #a9bd9c; }
+.state-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; min-height: 240px; padding: 30px 22px; text-align: center; }
+.city-directory > .state-panel { border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+.state-panel h2 { font-size: 1rem; line-height: 1.6; font-weight: 550; overflow-wrap: anywhere; }
+.state-panel p { max-width: 350px; color: var(--muted); font-size: .75rem; line-height: 1.9; overflow-wrap: anywhere; }
+.state-symbol { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 4px; border: 1px solid #dbe3d2; border-radius: 14px; color: #7b8f70; background: #f1f4eb; font-size: 1.125rem; }
+.state-panel--error .state-symbol { color: #a86542; background: #fbf0e6; border-color: #ead8c4; }
+.state-symbol--loading { width: 28px; height: 28px; margin: 7px 0 11px; border: 2px solid #dce5d4; border-top-color: var(--accent); border-radius: 50%; background: transparent; animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.not-found-page { max-width: 700px; margin: 80px auto; padding: 32px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+
+/* 地图工作区优先保证画布面积；侧栏独立滚动，长名称与说明允许自然换行。 */
+.map-page { padding: 0 22px 16px; }
+.map-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 64px; }
+.map-heading-title { display: flex; align-items: center; gap: 19px; min-width: 0; }
+.back-link { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; color: var(--muted); font-size: .75rem; }
+.back-link:hover { color: var(--accent); }
+.back-link > span { font-size: 1rem; }
+.heading-divider { width: 1px; height: 18px; flex-shrink: 0; background: var(--line); }
+.map-heading-title h1 { flex-shrink: 0; max-width: 240px; font-family: var(--serif); font-size: 1.375rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.current-map-name { min-width: 0; overflow: hidden; color: var(--muted); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+.current-map-name::before { content: '/'; margin-right: 16px; color: #bec5b5; }
+.close-map { flex-shrink: 0; }
+.close-map > span { font-size: 1.0625rem; line-height: 1; }
+.workspace-hint { display: flex; align-items: center; gap: 8px; color: #89957d; font-size: .6875rem; white-space: nowrap; }
+.workspace-hint > span { width: 5px; height: 5px; border-radius: 50%; background: #94ab85; }
+.map-workspace { display: grid; grid-template-columns: 304px minmax(0, 1fr); min-height: 520px; height: calc(100dvh - 148px); overflow: hidden; border: 1px solid #dce3d4; border-radius: 14px; background: var(--paper); box-shadow: 0 5px 25px #364a3104; }
+.map-sidebar { min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d2dbca transparent; border-right: 1px solid var(--line); }
+.public-map-panel, .map-detail-panel { padding: 24px 19px; }
+.public-map-panel > .section-kicker { margin: 0 4px 9px; }
+.panel-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 4px 9px; }
+.panel-heading h2 { font-size: .9375rem; line-height: 1.6; font-weight: 600; }
+.panel-count { flex-shrink: 0; color: #87947b; font-size: .6875rem; font-variant-numeric: tabular-nums; }
+.panel-description { margin: 0 4px; color: var(--muted); font-size: .75rem; line-height: 1.9; }
+.public-map-list { display: grid; gap: 8px; margin: 19px 0 0; padding: 0; list-style: none; }
+.public-map-card { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) 16px; align-items: center; gap: 12px; padding: 14px 12px; border: 1px solid transparent; border-radius: 9px; transition: background .16s, border-color .16s; }
+.public-map-card:hover { background: #f2f5ec; }
+.public-map-card--selected { border-color: #e0e7d8; background: #edf3e7; }
+.public-map-card--selected::before { content: ''; position: absolute; top: 17px; bottom: 17px; left: -1px; width: 3px; border-radius: 3px; background: var(--accent); }
+.map-card-symbol { display: grid; place-items: center; width: 34px; height: 38px; border: 1px solid #e0e7d7; border-radius: 8px; color: #7b9472; background: #f4f7ed; }
+.map-card-symbol svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.25; stroke-linejoin: round; }
+.public-map-card-body { min-width: 0; }
+.public-map-card h3 { font-size: .875rem; font-weight: 550; line-height: 1.6; overflow-wrap: anywhere; }
+.public-map-card-action { display: block; margin-top: 5px; color: #7c8f71; font-size: .6875rem; }
+.map-card-arrow { justify-self: end; color: #8ca07f; font-size: 1rem; }
+.public-map-card--selected .map-card-arrow { color: var(--accent); }
 .map-detail-panel { border-top: 1px solid var(--line); }
-.pin-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 20px; }
-.pin-summary h3 { font-size: 1.0625rem; }
-.pin-summary + .panel-description { margin-top: 8px; }
-.pin-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
-.pin-item { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; width: 100%; padding: 12px; text-align: left; border: 1px solid var(--line); border-radius: 8px; background: white; }
-.pin-item:hover { border-color: #86b4a4; background: #f7fbf9; }
-.pin-item--selected { border-color: #c07a4f; background: #fdf6f0; }
-.pin-index { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #edf4f1; color: #38645b; font-size: .8125rem; font-weight: 600; }
-.pin-item--selected .pin-index { background: #f3e3d7; color: #8f4a27; }
-.pin-name { display: block; font-size: .9375rem; font-weight: 600; }
-/* 未选中时说明最多两行，选中后展开完整内容。 */
-.pin-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 6px; color: var(--muted); font-size: .8125rem; line-height: 1.7; }
-.pin-item--selected .pin-description { -webkit-line-clamp: unset; }
-/* 图钉说明气泡由 MapLibre 插入地图容器，需用全局选择器。 */
-.pin-popup .maplibregl-popup-content { padding: 10px 12px; border: 1px solid #d9e3df; border-radius: 8px; box-shadow: 0 6px 18px #244c3f1f; }
-.pin-popup-content strong { display: block; font-size: .9375rem; color: #223735; }
-.pin-popup-content p { margin-top: 6px; color: #5a6d6a; font-size: .8125rem; line-height: 1.7; }
-.sidebar-note { margin: 12px 24px; padding-top: 24px; border-top: 1px solid var(--line); }
-.sidebar-note h3 { font-size: .875rem; font-weight: 600; }
-.sidebar-note p { margin-top: 10px; color: var(--muted); font-size: .875rem; line-height: 1.8; }
-.map-sidebar .state-panel { min-height: 240px; padding: 30px 0; }
-.map-sidebar .state-panel h2 { font-size: 1rem; }
+.pin-list { display: grid; gap: 4px; margin: 14px 0 0; padding: 0; list-style: none; }
+.pin-item { position: relative; display: grid; grid-template-columns: 29px minmax(0, 1fr); align-items: start; gap: 11px; width: 100%; padding: 15px 11px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: inherit; text-align: left; transition: background .16s, border-color .16s; }
+.pin-list > li + li { border-top: 1px solid #edf0e6; }
+.pin-item:hover { background: #f3f5ee; }
+.pin-item--selected { border-color: #eddfce; background: #fcf2e8; }
+.pin-item--selected:hover { background: #fcf2e8; }
+.pin-item--selected::before { content: ''; position: absolute; top: 15px; bottom: 15px; left: -1px; width: 3px; border-radius: 3px; background: var(--terracotta); }
+.pin-index { padding-top: 1px; color: #8e9b83; font: 1.1875rem/1.35 Georgia, serif; font-variant-numeric: tabular-nums; }
+.pin-item--selected .pin-index { color: var(--terracotta); }
+.pin-copy { min-width: 0; }
+.pin-name { display: block; font-size: .875rem; font-weight: 550; line-height: 1.7; overflow-wrap: anywhere; }
+/* 未选中时最多显示两行说明，选中后展开完整内容；保留原有交互语义。 */
+.pin-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 6px; color: var(--muted); font-size: .75rem; line-height: 1.85; overflow-wrap: anywhere; }
+.pin-item--selected .pin-description { display: block; -webkit-line-clamp: unset; }
+.sidebar-note { margin: 4px 23px 24px; padding-top: 26px; border-top: 1px solid var(--line); }
+.sidebar-note-mark { display: block; margin-bottom: 13px; color: #8ea381; font-size: 1.75rem; line-height: 1; }
+.sidebar-note h3 { font-family: var(--serif); color: #62755b; font-size: .875rem; line-height: 1.7; font-weight: 400; }
+.sidebar-note p { margin-top: 10px; color: #8a9580; font-size: .75rem; line-height: 1.9; }
+.map-sidebar .state-panel { min-height: 210px; padding: 26px 8px; }
+.map-sidebar .state-panel h2 { font-size: .875rem; }
+.map-sidebar .state-panel p { font-size: .75rem; }
+
+/* MapLibre 注入的弹窗与控件需要全局样式；不改变底图图层和图钉命中逻辑。 */
+.pin-popup .maplibregl-popup-content { max-width: 300px; padding: 17px 24px 17px 18px; border: 1px solid #dfe6d7; border-radius: 12px; background: var(--paper); box-shadow: 0 6px 24px #33432b14; font-family: inherit; }
+.pin-popup-content strong { display: block; color: #364b3d; font-size: .875rem; line-height: 1.7; overflow-wrap: anywhere; }
+.pin-popup-content p { max-height: 230px; overflow-y: auto; margin-top: 7px; color: #74816c; font-size: .75rem; line-height: 1.85; overflow-wrap: anywhere; }
+.pin-popup .maplibregl-popup-close-button { top: 2px; right: 3px; width: 24px; height: 24px; border-radius: 6px; color: #88977c; font-size: 1.125rem; }
 .basemap-viewport { position: relative; min-width: 0; background: #f5f3ee; }
-/* 高于 MapLibre 默认容器样式的优先级，保证异步加载 CSS 后仍撑满地图区域。 */
+/* 保证异步引入 MapLibre CSS 后，画布仍完整覆盖网格分配的空间。 */
 .basemap-viewport .basemap-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.map-caption { position: absolute; top: 20px; left: 24px; z-index: 1; display: flex; gap: 12px; align-items: center; background: #ffffffed; border: 1px solid var(--line); padding: 10px 14px; border-radius: 7px; font-size: .875rem; pointer-events: none; }
-.map-caption span { color: var(--muted); }
-.map-bottom-note { position: absolute; bottom: 40px; right: 10px; color: #425c50; font-size: .875rem; background: #fffffff0; padding: 6px 10px; border-radius: 4px; pointer-events: none; }
-.map-view-actions { position: absolute; top: 76px; left: 24px; z-index: 1; display: flex; gap: 8px; }
-.map-view-actions .button:disabled { opacity: .5; cursor: default; }
-.basemap-state { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: #f5f8f8ed; }
+.map-caption { position: absolute; top: 16px; left: 16px; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 9px; max-width: calc(100% - 265px); padding: 10px 13px; border: 1px solid #e1e7d9; border-radius: 9px; background: #fffefaf2; font-size: .6875rem; pointer-events: none; }
+.map-caption strong { font-weight: 600; overflow-wrap: anywhere; }
+.map-caption > span:not(.map-caption-dot) { color: #7d8b72; }
+.map-caption-dot { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: #729066; }
+.map-pin-count { padding-left: 9px; border-left: 1px solid #dce4d2; }
+.map-view-actions { position: absolute; top: 16px; right: 62px; z-index: 1; display: flex; gap: 2px; padding: 3px; border: 1px solid #dee5d5; border-radius: 9px; background: #fffefaf2; }
+.map-view-actions .button { min-height: 30px; padding: 5px 11px; border-color: transparent; border-radius: 6px; background: transparent; font-size: .75rem; }
+.map-view-actions .button:hover { background: #edf2e5; }
+.map-view-actions .button:disabled { opacity: .45; cursor: default; }
+.map-view-actions .button:disabled:hover { background: transparent; }
+.map-bottom-note { position: absolute; right: 15px; bottom: 39px; display: flex; align-items: center; gap: 9px; padding: 7px 10px; border: 1px solid #e1e6da; border-radius: 7px; color: #7f8a75; background: #fffefae8; font-size: .625rem; pointer-events: none; }
+.map-zoom-label { padding-right: 9px; border-right: 1px solid #dce3d3; color: #58714e; }
+.basemap-state { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: #f7f7f2ed; }
 .basemap-state .state-panel { max-width: 420px; }
-.not-found-page { max-width: 700px; margin: 80px auto; }
+.basemap-viewport .maplibregl-ctrl-top-right { top: 6px; right: 6px; }
+.basemap-viewport .maplibregl-ctrl-group { overflow: hidden; border: 1px solid #dce4d4; border-radius: 9px; background: var(--paper); box-shadow: 0 2px 8px #34442b0a; }
+.basemap-viewport .maplibregl-ctrl-group button { width: 34px; height: 34px; }
+.basemap-viewport .maplibregl-ctrl-group button + button { border-top-color: #e2e8d9; }
+.basemap-viewport .maplibregl-ctrl-scale { border-color: #7e9070; color: #66785b; background: #fffefacc; font-family: inherit; font-size: 10px; }
+@media (min-width: 1500px) { .city-page { padding-top: 58px; } .city-hero { min-height: 335px; } .city-directory { margin-top: 42px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

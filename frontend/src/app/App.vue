@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 
 const mainContent = ref<HTMLElement | null>(null)
+const route = useRoute()
 </script>
 
 <template>
@@ -10,11 +11,14 @@ const mainContent = ref<HTMLElement | null>(null)
   <a class="skip-link" href="#main-content" @click.prevent="mainContent?.focus()">跳到主要内容</a>
   <header class="site-header">
     <RouterLink class="brand" to="/" aria-label="拾点地图首页">
-      <span class="brand-mark" aria-hidden="true">拾</span>
-      <span>拾点地图</span>
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span class="brand-wordmark">拾点地图<small>GUIDEPINS</small></span>
     </RouterLink>
-    <span class="header-caption">一座城，一张属于旅途的地图</span>
-    <span class="tag">公共地图</span>
+    <span class="header-caption">把沿途的喜欢，拾进地图里。</span>
+    <nav class="header-nav" aria-label="主要导航">
+      <RouterLink to="/" :aria-current="route.name === 'cities' ? 'page' : undefined">城市目录<span aria-hidden="true">↗</span></RouterLink>
+      <span class="header-note">公共地图 · 自由探索</span>
+    </nav>
   </header>
 
   <main id="main-content" ref="mainContent" tabindex="-1"><RouterView /></main>

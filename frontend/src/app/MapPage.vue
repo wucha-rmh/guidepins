@@ -65,10 +65,11 @@ function focusPin(pinId: string) {
   </div>
   <div v-else class="map-page">
     <header class="map-page-heading">
-      <div class="map-heading-title"><RouterLink class="text-link" to="/">返回地市选择</RouterLink><span class="heading-divider"></span>
+      <div class="map-heading-title"><RouterLink class="back-link" to="/"><span aria-hidden="true">←</span>城市目录</RouterLink><span class="heading-divider" aria-hidden="true"></span>
         <h1>{{ city.name }}</h1>
-        <span v-if="mapId" class="muted">{{ mapName || (detailState === 'error' ? '地图详情不可用' : '正在加载公共地图…') }}</span></div>
-      <RouterLink v-if="mapId" class="button button--secondary" :to="{ name: 'city-map', params: { cityId } }">关闭公共地图</RouterLink>
+        <span v-if="mapId" class="current-map-name" :title="mapName">{{ mapName || (detailState === 'error' ? '地图详情不可用' : '正在加载公共地图…') }}</span></div>
+      <RouterLink v-if="mapId" class="button button--secondary close-map" :to="{ name: 'city-map', params: { cityId } }"><span aria-hidden="true">×</span>关闭公共地图</RouterLink>
+      <span v-else class="workspace-hint"><span aria-hidden="true"></span>自由探索，从这里开始</span>
     </header>
     <div class="map-workspace">
       <aside class="map-sidebar" aria-label="公共地图与详情">
@@ -76,7 +77,7 @@ function focusPin(pinId: string) {
           :selected-map-id="mapId" @retry="reloadMaps" />
         <MapDetailPanel v-if="mapId" :detail="detail" :state="detailState" :error="detailError"
           :selected-pin-id="selectedPinId" @retry="reloadDetail" @select-pin="focusPin" />
-        <div v-else class="sidebar-note"><h3>浏览地市底图</h3><p>拖动或缩放地图查看街区；“主城区”回到街区首屏，“查看全市”看完整市域。</p></div>
+        <div v-else class="sidebar-note"><span class="sidebar-note-mark" aria-hidden="true">⌖</span><h3>先随意逛逛，也很好。</h3><p>拖动地图发现街巷，或选一张公共地图，沿着地点慢慢探索。</p></div>
       </aside>
       <BasemapViewport ref="viewport" :key="city.id" :city="city" :pins="pins"
         :selected-pin-id="selectedPinId" @select-pin="selectPin" />

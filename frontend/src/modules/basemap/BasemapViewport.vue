@@ -64,8 +64,8 @@ onScopeDispose(() => basemap?.destroy())
   <section class="basemap-viewport" :aria-label="`${city.name}底图`" :aria-busy="state === 'loading'">
     <div ref="container" class="basemap-canvas"></div>
     <div class="map-caption">
-      <strong>{{ city.name }}</strong><span>地市底图</span>
-      <span v-if="pins.length">{{ pins.length }} 个图钉</span>
+      <span class="map-caption-dot" aria-hidden="true"></span><strong>{{ city.name }}</strong><span>城市漫游</span>
+      <span v-if="pins.length" class="map-pin-count">{{ pins.length }} 处地点</span>
     </div>
     <div class="map-view-actions">
       <button class="button button--secondary" type="button" :disabled="state !== 'ready'"
@@ -78,7 +78,7 @@ onScopeDispose(() => basemap?.destroy())
         :description="state === 'loading' ? '正在读取地图，请稍候。' : error" retry-label="重试加载底图" @retry="load" />
     </div>
     <div v-else class="map-bottom-note" role="status">
-      拖动浏览 · 滚轮缩放 · 当前级别 {{ zoom.toFixed(1) }}<template v-if="pins.length"> · 点击图钉查看说明</template>
+      <span class="map-zoom-label">{{ zoom >= 14 ? '街区视角' : '城市视角' }}</span>拖动浏览 · 滚轮缩放<template v-if="pins.length"> · 点击图钉查看说明</template>
     </div>
   </section>
 </template>
