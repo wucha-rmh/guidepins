@@ -14,9 +14,9 @@ const route = useRoute()
       <span class="brand-mark" aria-hidden="true"><span></span></span>
       <span class="brand-wordmark">拾点地图<small>GUIDEPINS</small></span>
     </RouterLink>
-    <span class="header-caption">把沿途的喜欢，拾进地图里。</span>
+    <span class="header-caption">沿着地图，发现值得停留的地方</span>
     <nav class="header-nav" aria-label="主要导航">
-      <RouterLink to="/" :aria-current="route.name === 'cities' ? 'page' : undefined">城市目录<span aria-hidden="true">↗</span></RouterLink>
+      <RouterLink to="/" :aria-current="route.name === 'cities' ? 'page' : undefined">城市目录</RouterLink>
       <span class="header-note">公共地图 · 自由探索</span>
     </nav>
   </header>

@@ -64,10 +64,10 @@ onScopeDispose(() => basemap?.destroy())
   <section class="basemap-viewport" :aria-label="`${city.name}底图`" :aria-busy="state === 'loading'">
     <div ref="container" class="basemap-canvas"></div>
     <div class="map-caption">
-      <span class="map-caption-dot" aria-hidden="true"></span><strong>{{ city.name }}</strong><span>城市漫游</span>
+      <strong>{{ city.name }}</strong>
       <span v-if="pins.length" class="map-pin-count">{{ pins.length }} 处地点</span>
     </div>
-    <div class="map-view-actions">
+    <div class="map-view-actions" role="group" aria-label="地图视野">
       <button class="button button--secondary" type="button" :disabled="state !== 'ready'"
         @click="basemap?.fitUrban()">主城区</button>
       <button class="button button--secondary" type="button" :disabled="state !== 'ready'"
@@ -78,7 +78,7 @@ onScopeDispose(() => basemap?.destroy())
         :description="state === 'loading' ? '正在读取地图，请稍候。' : error" retry-label="重试加载底图" @retry="load" />
     </div>
     <div v-else class="map-bottom-note" role="status">
-      <span class="map-zoom-label">{{ zoom >= 14 ? '街区视角' : '城市视角' }}</span>拖动浏览 · 滚轮缩放<template v-if="pins.length"> · 点击图钉查看说明</template>
+      <span class="map-zoom-label">{{ zoom >= 14 ? '街区视角' : '城市视角' }}</span><span v-if="pins.length">点选编号查看地点</span><span v-else>拖动浏览 · 滚轮缩放</span>
     </div>
   </section>
 </template>

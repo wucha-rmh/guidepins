@@ -22,12 +22,12 @@ defineEmits<{ retry: []; selectPin: [pinId: string] }>()
       <StatePanel v-if="detail.pins.length === 0" kind="empty" title="这张地图暂无图钉"
         description="有新的地点时，会显示在地图上。" />
       <template v-else>
-        <p class="panel-description">点选一个地点，让地图带你过去。</p>
+        <p class="panel-description">编号对应地图上的地点，点选可查看详情</p>
         <ol class="pin-list" aria-label="图钉列表">
           <li v-for="(pin, index) in detail.pins" :key="pin.id">
             <button type="button" class="pin-item" :class="{ 'pin-item--selected': pin.id === selectedPinId }"
               :aria-pressed="pin.id === selectedPinId" @click="$emit('selectPin', pin.id)">
-              <span class="pin-index" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span>
+              <span class="pin-index" aria-hidden="true">{{ index + 1 }}</span>
               <span class="pin-copy">
                 <span class="pin-name">{{ pin.name }}</span>
                 <span v-if="pin.description" class="pin-description">{{ pin.description }}</span>
