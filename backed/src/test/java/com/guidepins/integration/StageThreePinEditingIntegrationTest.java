@@ -68,7 +68,8 @@ class StageThreePinEditingIntegrationTest {
     void resetIsolatedDatabase() throws Exception {
         try (Connection connection = ownerConnection()) {
             var sql = new JdbcTemplate(new SingleConnectionDataSource(connection, true));
-            sql.execute("TRUNCATE public.map_pin, public.travel_map, public.auth_session, public.user_account, public.city");
+            sql.execute("TRUNCATE public.pin_guide, public.guide, public.map_pin, public.travel_map, "
+                    + "public.auth_session, public.user_account, public.city");
             sql.update("INSERT INTO public.city (id, code, name, basemap_path, west, south, east, north) "
                     + "VALUES (?, '320100', '南京', '/maps/nanjing/v1/nanjing-z16.pmtiles', 118.3, 31.2, 119.2, 32.6)", CITY);
         }

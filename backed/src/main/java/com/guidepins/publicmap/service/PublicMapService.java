@@ -6,9 +6,13 @@ import com.guidepins.exception.ApiException;
 import com.guidepins.exception.ResourceNotFoundException;
 import com.guidepins.publicmap.domain.PublicMap;
 import com.guidepins.publicmap.domain.ManagedMap;
+import com.guidepins.publicmap.domain.MapPin;
+import com.guidepins.publicmap.domain.GuideSummary;
 import com.guidepins.publicmap.domain.PublicMapDetail;
+import com.guidepins.publicmap.mapper.GuideDataMapper;
 import com.guidepins.publicmap.mapper.PublicMapDataMapper;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,9 @@ public class PublicMapService {
     private PublicMapDataMapper maps;
 
     @Autowired
+    private GuideDataMapper guides;
+
+    @Autowired
     private CityService cities;
 
     public List<PublicMap> listByCity(UUID cityId) {
@@ -34,9 +41,14 @@ public class PublicMapService {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public PublicMapDetail get(UUID id, AccountIdentity viewer) {
         UUID viewerId = viewer == null ? null : viewer.id();
-        // 地图与图钉在同一快照内读取；不存在和无读取权限都返回 404。
+        // 地图、图钉与出处摘要在同一快照内读取；不存在和无读取权限都返回 404。
         ManagedMap map = readable(id, viewerId);
-        return new PublicMapDetail(map.id(), map.cityId(), map.name(), maps.findPinsByMapId(id, viewerId));
+        Map<UUID, List<GuideSummary>> summaries = guides.findSummariesByMap(id, viewerId);
+        List<MapPin> pins = maps.findPinsByMapId(id, viewerId).stream()
+                .map(pin -> new MapPin(pin.id(), pin.name(), pin.description(), pin.longitude(), pin.latitude(),
+                        summaries.getOrDefault(pin.id(), List.of())))
+                .toList();
+        return new PublicMapDetail(map.id(), map.cityId(), map.name(), pins);
     }
 
     @Transactional(readOnly = true)

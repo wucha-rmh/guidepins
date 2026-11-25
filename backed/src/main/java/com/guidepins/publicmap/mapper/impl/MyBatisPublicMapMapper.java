@@ -110,6 +110,8 @@ public class MyBatisPublicMapMapper implements PublicMapDataMapper {
     }
 
     private static MapPin toPin(MapPinRow row) {
-        return new MapPin(row.getId(), row.getName(), row.getDescription(), row.getLongitude(), row.getLatitude());
+        // 写入接口不回读出处的关联，因此这里给空列表；详情读取由服务层补齐摘要。
+        return new MapPin(row.getId(), row.getName(), row.getDescription(), row.getLongitude(), row.getLatitude(),
+                List.of());
     }
 }

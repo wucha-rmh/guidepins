@@ -24,9 +24,11 @@ import com.guidepins.publicmap.mapper.entity.TravelMapRow;
 import com.guidepins.publicmap.mapper.mybatis.MapPinSqlMapper;
 import com.guidepins.publicmap.mapper.impl.MyBatisPublicMapMapper;
 import com.guidepins.publicmap.mapper.PublicMapDataMapper;
+import com.guidepins.publicmap.mapper.GuideDataMapper;
 import com.guidepins.publicmap.mapper.mybatis.TravelMapSqlMapper;
 import com.guidepins.publicmap.service.PublicMapService;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -40,7 +42,7 @@ class PublicMapModuleTest {
     private final UUID mapId = UUID.randomUUID();
     private final PublicMap map = new PublicMap(mapId, cityId, "南京秦淮示例地图");
     private final ManagedMap managedMap = new ManagedMap(mapId, cityId, map.name(), null, "public", null, null);
-    private final MapPin pin = new MapPin(UUID.randomUUID(), "中华门", "城门说明", 118.77, 32.01);
+    private final MapPin pin = new MapPin(UUID.randomUUID(), "中华门", "城门说明", 118.77, 32.01, List.of());
 
     @Test
     void callsXmlMapperByParentAndMapsRows() {
@@ -78,10 +80,14 @@ class PublicMapModuleTest {
     void combinesMapAndPinsAndRejectsUnknownCity() {
         PublicMapDataMapper dataMapper = Mockito.mock(PublicMapDataMapper.class);
         CityService cities = Mockito.mock(CityService.class);
+        GuideDataMapper guides = Mockito.mock(GuideDataMapper.class);
         when(dataMapper.findById(mapId, null)).thenReturn(Optional.of(managedMap));
         when(dataMapper.findPinsByMapId(mapId, null)).thenReturn(List.of(pin));
+        // 详情接口会为每个图钉补出处摘要；这里没有攻略，返回空映射即可。
+        when(guides.findSummariesByMap(mapId, null)).thenReturn(Map.of());
         try (var context = new AnnotationConfigApplicationContext()) {
             context.registerBean(PublicMapDataMapper.class, () -> dataMapper);
+            context.registerBean(GuideDataMapper.class, () -> guides);
             // 模拟服务已由测试创建，直接注册，避免 Spring 再装配其内部依赖。
             context.getBeanFactory().registerSingleton("cities", cities);
             context.register(PublicMapService.class);
@@ -103,9 +109,12 @@ class PublicMapModuleTest {
         when(dataMapper.findByCityId(cityId)).thenReturn(List.of(map));
         when(dataMapper.findById(mapId, null)).thenReturn(Optional.of(managedMap));
         when(dataMapper.findPinsByMapId(mapId, null)).thenReturn(List.of(pin));
+        GuideDataMapper guides = Mockito.mock(GuideDataMapper.class);
+        when(guides.findSummariesByMap(mapId, null)).thenReturn(Map.of());
         // 使用真实服务装配跨模块依赖，接口断言同时覆盖字段注入是否生效。
         try (var context = new AnnotationConfigApplicationContext()) {
             context.registerBean(PublicMapDataMapper.class, () -> dataMapper);
+            context.registerBean(GuideDataMapper.class, () -> guides);
             context.registerBean(CityDataMapper.class, () -> cityMapper);
             context.registerBean(ObjectMapper.class, () -> new ObjectMapper());
             context.register(PublicMapController.class, PublicMapService.class, CityService.class, ApiResponseAdvice.class);

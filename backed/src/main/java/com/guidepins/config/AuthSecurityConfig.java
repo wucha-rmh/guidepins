@@ -62,7 +62,9 @@ public class AuthSecurityConfig {
                 .authorizeHttpRequests(access -> access
                         .requestMatchers("/api/auth/csrf", "/api/auth/register", "/api/auth/login",
                                 "/api/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/cities", "/api/cities/*/maps", "/api/maps/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cities", "/api/cities/*/maps", "/api/maps/*",
+                                "/api/maps/*/guides", "/api/maps/*/guides/*", "/api/maps/*/pins/*/guides")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(sessions, AnonymousAuthenticationFilter.class);
         return http.build();

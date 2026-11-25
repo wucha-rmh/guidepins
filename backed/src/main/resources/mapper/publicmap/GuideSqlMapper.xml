@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.guidepins.publicmap.mapper.mybatis.GuideSqlMapper">
+    <resultMap id="guideRow" type="com.guidepins.publicmap.mapper.entity.GuideRow">
+        <id property="id" column="id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="mapId" column="map_id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="origin" column="origin"/>
+        <result property="title" column="title"/>
+        <result property="body" column="body"/>
+        <result property="sourceUrl" column="source_url"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="guidePinLinkRow" type="com.guidepins.publicmap.mapper.entity.GuidePinLinkRow">
+        <result property="guideId" column="guide_id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="pinId" column="pin_id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="position" column="position"/>
+    </resultMap>
+
+    <resultMap id="guideSummaryRow" type="com.guidepins.publicmap.mapper.entity.GuideSummaryRow">
+        <result property="pinId" column="pin_id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="guideId" column="guide_id" typeHandler="com.guidepins.config.PostgresUuidTypeHandler"/>
+        <result property="title" column="title"/>
+        <result property="sourceUrl" column="source_url"/>
+    </resultMap>
+
+    <sql id="guideColumns">g.id, g.map_id, g.origin, g.title, g.body, g.source_url, g.created_at, g.updated_at</sql>
+    <!-- INSERT / UPDATE 的 RETURNING 没有表别名，另列一份不带前缀的字段清单。 -->
+    <sql id="returnedGuideColumns">id, map_id, origin, title, body, source_url, created_at, updated_at</sql>
+    <!-- 写权限：地图所有者，或管理员且地图公开；别名 g 指攻略行。 -->
+    <sql id="writableByActor">
+        EXISTS (
+            SELECT 1
+            FROM public.travel_map m
+            JOIN public.user_account a
+              ON a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+            WHERE m.id = g.map_id
+              AND a.status = 1
+              AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+        )
+    </sql>
+
+    <!-- 地图下的攻略列表：公开地图任何人可读，私有地图只有所有者可读。 -->
+    <select id="selectByMap" resultMap="guideRow">
+        SELECT <include refid="guideColumns"/>
+        FROM public.guide g
+        JOIN public.travel_map m ON m.id = g.map_id
+        WHERE g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (m.visibility = 'public'
+               OR m.owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
+        ORDER BY g.created_at DESC, g.id
+    </select>
+
+    <select id="selectGuide" resultMap="guideRow">
+        SELECT <include refid="guideColumns"/>
+        FROM public.guide g
+        JOIN public.travel_map m ON m.id = g.map_id
+        WHERE g.id = #{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (m.visibility = 'public'
+               OR m.owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
+    </select>
+
+    <!-- 写入前读取一次：命中说明当前账号可写，未命中由服务层再区分 403 与 404。 -->
+    <select id="selectWritableGuide" resultMap="guideRow">
+        SELECT <include refid="guideColumns"/>
+        FROM public.guide g
+        WHERE g.id = #{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND <include refid="writableByActor"/>
+    </select>
+
+    <!-- 反查：提到某个图钉的全部攻略，按站序排列。 -->
+    <select id="selectByPin" resultMap="guideRow">
+        SELECT <include refid="guideColumns"/>
+        FROM public.guide g
+        JOIN public.pin_guide l ON l.guide_id = g.id
+        JOIN public.travel_map m ON m.id = g.map_id
+        WHERE l.pin_id = #{pinId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (m.visibility = 'public'
+               OR m.owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
+        ORDER BY l.position, g.created_at, g.id
+    </select>
+
+    <select id="selectLinksByGuide" resultMap="guidePinLinkRow">
+        SELECT l.guide_id, l.pin_id, l.position
+        FROM public.pin_guide l
+        JOIN public.guide g ON g.id = l.guide_id
+        JOIN public.travel_map m ON m.id = g.map_id
+        WHERE l.guide_id = #{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (m.visibility = 'public'
+               OR m.owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
+        ORDER BY l.position, l.pin_id
+    </select>
+
+    <!-- 一次取出整张地图的关联，供列表接口在内存里按攻略分组。 -->
+    <select id="selectLinksByMap" resultMap="guidePinLinkRow">
+        SELECT l.guide_id, l.pin_id, l.position
+        FROM public.pin_guide l
+        JOIN public.guide g ON g.id = l.guide_id
+        JOIN public.travel_map m ON m.id = g.map_id
+        WHERE g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (m.visibility = 'public'
+               OR m.owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
+        ORDER BY g.created_at, g.id, l.position, l.pin_id
+    </select>
+
+    <!-- 地图详情内嵌出处：一次查出全部关联，再按图钉分组。 -->
+    <select id="selectSummariesByMap" resultMap="guideSummaryRow">
+        SELECT l.pin_id, g.id AS guide_id, g.title, g.source_url
+        FROM public.pin_guide l
+        JOIN public.guide g ON g.id = l.guide_id
+        JOIN public.travel_map m ON m.id = g.map_id
+        WHERE g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (m.visibility = 'public'
+               OR m.owner_id = #{viewerId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler})
+        ORDER BY g.created_at, g.id, l.position, l.pin_id
+    </select>
+
+    <!-- 新增攻略：所有者可写自己的地图，管理员可维护他人的公开地图，私有地图仍拒绝。 -->
+    <select id="insertGuide" resultMap="guideRow" affectData="true" flushCache="true">
+        INSERT INTO public.guide (map_id, title, body, source_url)
+        SELECT m.id, #{title}, #{body}, #{sourceUrl,jdbcType=VARCHAR}
+        FROM public.travel_map m
+        WHERE m.id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1 FROM public.user_account a
+              WHERE a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND a.status = 1
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+        RETURNING <include refid="returnedGuideColumns"/>
+    </select>
+
+    <!-- 修改攻略：内容实际变化才推进 updated_at，与图钉的写法保持一致。 -->
+    <select id="updateGuide" resultMap="guideRow" affectData="true" flushCache="true">
+        UPDATE public.guide g
+        SET title = #{title},
+            body = #{body},
+            source_url = #{sourceUrl,jdbcType=VARCHAR},
+            updated_at = CASE
+                WHEN g.title IS DISTINCT FROM #{title}
+                  OR g.body IS DISTINCT FROM #{body}
+                  OR g.source_url IS DISTINCT FROM #{sourceUrl,jdbcType=VARCHAR}
+                THEN clock_timestamp()
+                ELSE g.updated_at
+            END
+        WHERE g.id = #{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND <include refid="writableByActor"/>
+        RETURNING <include refid="returnedGuideColumns"/>
+    </select>
+
+    <!-- 删除攻略：关联行由外键 ON DELETE CASCADE 清掉，图钉本身保留。 -->
+    <select id="deleteGuide" resultType="java.util.UUID" affectData="true" flushCache="true">
+        DELETE FROM public.guide g
+        WHERE g.id = #{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND <include refid="writableByActor"/>
+        RETURNING g.id
+    </select>
+
+    <!-- 逐个校验请求里的图钉：必须属于该地图，且当前账号可写。 -->
+    <select id="selectLinkablePinIds" resultType="java.util.UUID" flushCache="true">
+        SELECT p.id
+        FROM public.map_pin p
+        JOIN public.guide g ON g.map_id = p.map_id
+        JOIN public.travel_map m ON m.id = p.map_id
+        JOIN public.user_account a
+          ON a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+         AND a.status = 1
+        WHERE g.id = #{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND p.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          AND p.id IN
+          <foreach collection="pinIds" item="pinId" open="(" separator="," close=")">
+              #{pinId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          </foreach>
+    </select>
+
+    <!-- 重设关联前先清空本篇攻略的旧关联；权限条件与其它写入一致。 -->
+    <delete id="deleteLinksByGuide">
+        DELETE FROM public.pin_guide l
+        WHERE l.guide_id = #{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1
+              FROM public.guide g
+              JOIN public.travel_map m ON m.id = g.map_id
+              JOIN public.user_account a
+                ON a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+               AND a.status = 1
+              WHERE g.id = l.guide_id
+                AND g.map_id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+    </delete>
+
+    <!-- 关联写入：位置由服务层按数组下标给出，0 起连续。 -->
+    <insert id="insertLink">
+        INSERT INTO public.pin_guide (guide_id, pin_id, position)
+        VALUES (#{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler},
+                #{pinId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler},
+                #{position})
+    </insert>
+
+    <!-- 攻略内容确实变化时才推进地图更新时间；带 RETURNING 才能以 select 执行。 -->
+    <select id="touchMapOnGuideChange" resultType="java.lang.Integer" affectData="true" flushCache="true">
+        UPDATE public.travel_map m
+        SET updated_at = clock_timestamp()
+        WHERE m.id = #{mapId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+          AND EXISTS (
+              SELECT 1 FROM public.guide g
+              WHERE g.id = #{guideId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND g.map_id = m.id
+                AND (g.title IS DISTINCT FROM #{title}
+                     OR g.body IS DISTINCT FROM #{body}
+                     OR g.source_url IS DISTINCT FROM #{sourceUrl,jdbcType=VARCHAR})
+          )
+          AND EXISTS (
+              SELECT 1 FROM public.user_account a
+              WHERE a.id = #{actorId,typeHandler=com.guidepins.config.PostgresUuidTypeHandler}
+                AND a.status = 1
+                AND (m.owner_id = a.id OR (a.role = 'admin' AND m.visibility = 'public'))
+          )
+        RETURNING 1
+    </select>
+</mapper>
