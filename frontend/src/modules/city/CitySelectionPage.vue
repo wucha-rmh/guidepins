@@ -1,12 +1,69 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
-import StatePanel from '../../shared/StatePanel.vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { provinceCodeOf, provinceNameOf } from './provinces'
 import { useCities } from './useCities'
+import type { City } from './types'
 
 const { cities, state, error, reload } = useCities()
 const route = useRoute()
+const router = useRouter()
 const personalMaps = computed(() => route.query.tab === 'mine')
+// 首页只保留一个入口按钮，城市选择放进对话框里分级展开，避免长期占版面。
+const picker = ref<HTMLDialogElement | null>(null)
+
+/** 省份分组：只汇总地市目录里真实存在的省份，空省份不会出现在下拉框中。 */
+interface ProvinceGroup {
+  code: string
+  name: string
+  cities: City[]
+}
+
+const provinces = computed<ProvinceGroup[]>(() => {
+  const groups = new Map<string, ProvinceGroup>()
+  for (const city of cities.value) {
+    const code = provinceCodeOf(city.code)
+    if (!code) continue
+    const group = groups.get(code) ?? { code, name: provinceNameOf(code), cities: [] }
+    group.cities.push(city)
+    groups.set(code, group)
+  }
+  return [...groups.values()].sort((left, right) => left.code.localeCompare(right.code))
+})
+
+const selectedProvince = ref('')
+const selectedCityId = ref('')
+const selectedCities = computed(
+  () => provinces.value.find((group) => group.code === selectedProvince.value)?.cities ?? [],
+)
+const canEnter = computed(() => selectedCities.value.some((city) => city.id === selectedCityId.value))
+
+// 换省份后清空地市，避免残留上一个省份的选择。
+watch(selectedProvince, () => { selectedCityId.value = '' })
+
+function openPicker() {
+  selectedProvince.value = ''
+  selectedCityId.value = ''
+  if (picker.value && !picker.value.open) picker.value.showModal()
+}
+
+function closePicker() {
+  picker.value?.close()
+}
+
+function enterCity() {
+  if (!canEnter.value) return
+  const cityId = selectedCityId.value
+  closePicker()
+  void router.push({
+    name: 'city-map',
+    params: { cityId },
+    query: personalMaps.value ? { tab: 'mine' } : {},
+  })
+}
+
+// 选中城市就会换路由，对话框随之收起，避免返回首页时还压着一层。
+watch(() => route.fullPath, closePicker)
 </script>
 
 <template>
@@ -35,28 +92,47 @@ const personalMaps = computed(() => route.query.tab === 'mine')
     </section>
 
     <section class="city-directory" aria-labelledby="directory-heading">
-      <div class="section-heading">
-        <h2 id="directory-heading">{{ personalMaps ? '选择城市，查看我的地图' : '选择城市' }}</h2>
-        <span class="directory-count" v-if="state === 'ready' && cities.length > 0">共 {{ cities.length }} 座城市</span>
-      </div>
-      <StatePanel v-if="state === 'loading'" kind="loading" title="正在加载城市" description="正在获取可浏览的城市列表" />
-      <StatePanel v-else-if="state === 'error'" kind="error" title="城市列表加载失败"
-        :description="error" @retry="reload" />
-      <StatePanel v-else-if="cities.length === 0" kind="empty" title="暂无可选城市" description="城市开放后会显示在这里，请稍后再来查看" />
-      <div v-else class="city-grid" :class="{ 'city-grid--single': cities.length === 1 }">
-        <RouterLink v-for="city in cities" :key="city.id" class="city-card" :to="{ name: 'city-map', params: { cityId: city.id }, query: personalMaps ? { tab: 'mine' } : {} }">
-          <div class="city-card-art" aria-hidden="true">
-            <svg viewBox="0 0 160 130" fill="none" focusable="false"><path class="card-map-land" d="M29 17L89 7L144 41L137 103L72 122L12 81Z"/><path class="card-map-street" d="M29 17L72 122M89 7L65 52L137 103M12 81L144 41M22 57L119 105"/><path class="card-map-route" d="M37 89L67 70L83 43L116 52"/><circle class="card-map-dot" cx="83" cy="43" r="7"/></svg>
-          </div>
-          <div class="city-card-content">
-            <span class="city-card-kicker">城市地图</span>
-            <h3>{{ city.name }}</h3>
-            <p>{{ personalMaps ? '查看或创建我的地图' : '浏览公共地图与地点' }}</p>
-          </div>
-          <span class="city-card-action">进入地图<span class="city-card-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></span></span>
-        </RouterLink>
-      </div>
+      <h2 id="directory-heading" class="visually-hidden">{{ personalMaps ? '选择城市，查看我的地图' : '选择城市' }}</h2>
+      <button type="button" class="button button--primary city-select-button"
+        :disabled="state === 'loading'" aria-haspopup="dialog" @click="openPicker">
+        {{ state === 'loading' ? '正在加载城市…' : '选择城市' }}
+      </button>
+      <!-- 城市列表加载失败时把原因与重试留在按钮下方，点按钮仍能看到同一个对话框。 -->
+      <p v-if="state === 'error'" class="city-select-error">
+        {{ error }}<button type="button" class="text-link" @click="reload">重试</button>
+      </p>
     </section>
+
     <footer class="page-footnote"><span>拾点地图<span class="footer-dot" aria-hidden="true">·</span>城市漫游手记</span><span>公共地图，自由浏览</span></footer>
+
+    <dialog ref="picker" class="city-picker-dialog" aria-labelledby="city-picker-title">
+      <div class="city-picker-head">
+        <h2 id="city-picker-title">选择城市</h2>
+        <span v-if="state === 'ready' && cities.length > 0" class="directory-count">共 {{ cities.length }} 座城市</span>
+      </div>
+      <p v-if="state === 'error'" class="city-picker-note">{{ error }}<button type="button" class="text-link" @click="reload">重试</button></p>
+      <p v-else-if="state === 'ready' && cities.length === 0" class="city-picker-note">暂无可选城市，开放后会显示在这里。</p>
+      <!-- 分级选择：先省份，选定省份后再出现该省的地市下拉框。 -->
+      <div v-else class="city-picker-fields">
+        <label class="city-picker-field">
+          <span class="city-picker-label">省份</span>
+          <select v-model="selectedProvince" :disabled="provinces.length === 0">
+            <option value="">请选择省份</option>
+            <option v-for="group in provinces" :key="group.code" :value="group.code">{{ group.name }}</option>
+          </select>
+        </label>
+        <label v-if="selectedProvince" class="city-picker-field">
+          <span class="city-picker-label">城市</span>
+          <select v-model="selectedCityId">
+            <option value="">请选择城市</option>
+            <option v-for="city in selectedCities" :key="city.id" :value="city.id">{{ city.name }}</option>
+          </select>
+        </label>
+      </div>
+      <div class="city-picker-actions">
+        <button type="button" class="text-link" @click="closePicker">取消</button>
+        <button type="button" class="button button--primary" :disabled="!canEnter" @click="enterCity">进入地图</button>
+      </div>
+    </dialog>
   </div>
 </template>

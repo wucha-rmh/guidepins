@@ -11,7 +11,11 @@ public class BasemapService {
     @Autowired
     private BasemapMapper basemaps;
 
-    public Resource nanjing() {
-        return basemaps.nanjing();
+    public Resource pmtiles(String code) {
+        return basemaps.pmtiles(code);
+    }
+
+    public Resource boundary(String code) {
+        return basemaps.boundary(code);
     }
 }

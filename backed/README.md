@@ -1,6 +1,6 @@
 # 拾点地图后端
 
-Spring Boot / Java 25 后端，使用 MyBatis XML、MyBatis-Plus 和 PostgreSQL。提供地市与底图、公共地图与图钉读取，阶段二的注册登录、数据库会话和私人地图管理，以及阶段三的图钉编辑与攻略出处。
+Spring Boot / Java 25 后端，使用 MyBatis XML、MyBatis-Plus 和 PostgreSQL。提供地市与底图（江苏 13 个地市，按城市代码提供 PMTiles 与市界）、公共地图与图钉读取，阶段二的注册登录、数据库会话和私人地图管理，以及阶段三的图钉编辑与攻略出处。
 
 ## 模块
 
@@ -9,7 +9,7 @@ Spring Boot / Java 25 后端，使用 MyBatis XML、MyBatis-Plus 和 PostgreSQL�
 | `auth` | 注册、密码登录、会话、CSRF 与当前请求身份 |
 | `city` | 地市目录和底图描述 |
 | `publicmap` | 公开列表、地图详情、我的地图及地图元数据管理 |
-| `basemap` | 南京 PMTiles 文件，支持 HTTP Range / 206 |
+| `basemap` | 按代码读各地市 PMTiles 与市界，PMTiles 支持 HTTP Range / 206 |
 | `config` | 统一的安全配置、Bean 装配和 PostgreSQL UUID 类型处理 |
 | `common` | 统一 JSON 响应契约与过滤器／容器错误输出等公共代码 |
 
@@ -29,7 +29,7 @@ mvn spring-boot:run
 
 `.env` 使用 Java Properties 格式，已被 Git 忽略。不要提交真实密码。默认端口 8080，可通过 `GUIDEPINS_SERVER_PORT` 修改；数据库地址、用户、密码通过 `GUIDEPINS_DB_URL`、`GUIDEPINS_DB_USER`、`GUIDEPINS_DB_PASSWORD` 指定。
 
-从仓库根目录或 `backed` 目录启动均支持读取对应的 `.env` / `backed/.env`；若两者都存在，以后加载的 `backed/.env` 为准。底图默认相对路径按 `backed` 目录启动配置，其他工作目录使用 `GUIDEPINS_NANJING_PM` 指定绝对路径。
+从仓库根目录或 `backed` 目录启动均支持读取对应的 `.env` / `backed/.env`；若两者都存在，以后加载的 `backed/.env` 为准。底图根目录由 `GUIDEPINS_BASEMAP_ROOT` 指定，默认 `./map/江苏省地图数据/城市`，相对路径会从当前工作目录向上探测三层，因此仓库根与 `backed` 目录启动都能命中。
 
 正式环境使用 HTTPS 同源代理，并保持 `GUIDEPINS_COOKIE_SECURE=true`。前端写请求先获取 CSRF 令牌；注册、登录、退出同样校验。
 

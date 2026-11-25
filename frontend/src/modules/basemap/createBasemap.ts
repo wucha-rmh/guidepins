@@ -3,11 +3,12 @@ import {
   type GeoJSONSource, type LngLatBoundsLike, type LngLatLike,
 } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
-import type { FeatureCollection } from 'geojson'
 import { FetchSource, PMTiles, Protocol } from 'pmtiles'
-import boundaryUrl from './nanjing-boundary.json?url'
+import { fetchCityBoundary } from '../city/boundary'
 import type { City } from '../city/types'
 import type { MapPin } from '../public-map/types'
+import { boundaryCollection, buildBoundaryLayers } from './boundary'
+import { hasMetroLayers } from './metro'
 import { createPinOverlay, type DraftPoint } from './pinLayers'
 import { createBasemapStyle } from './style'
 import { urbanViewFor } from './views'
@@ -40,6 +41,10 @@ export function createBasemap(container: HTMLElement, city: City, events: Basema
   if (!['http:', 'https:'].includes(archiveUrl.protocol)) throw new Error('底图地址无效，请联系管理员。')
   const { west, south, east, north } = city.bounds
   const bounds: LngLatBoundsLike = [[west, south], [east, north]]
+  // 视野锁在城市范围内：留 3% 余量以便贴边图钉仍可点选，再往外拖不动。
+  const padX = Math.max((east - west) * 0.03, 0.01)
+  const padY = Math.max((north - south) * 0.03, 0.01)
+  const viewBounds: LngLatBoundsLike = [[west - padX, south - padY], [east + padX, north + padY]]
   // 首屏落在主城区，全市轮廓改由「查看全市」按钮进入。
   const urban = urbanViewFor(city)
   const lifecycle = new AbortController()
@@ -65,9 +70,10 @@ export function createBasemap(container: HTMLElement, city: City, events: Basema
   try {
     map = new Map({
       container,
-      style: createBasemapStyle(archiveUrl.href),
+      style: createBasemapStyle(archiveUrl.href, { metro: hasMetroLayers(city.code) }),
       center: urban.center,
       zoom: urban.zoom,
+      maxBounds: viewBounds,
       minZoom: 7, maxZoom: 20,
       renderWorldCopies: false,
       dragRotate: false, pitchWithRotate: false,
@@ -125,12 +131,13 @@ export function createBasemap(container: HTMLElement, city: City, events: Basema
   /** 市界遮罩只是低缩放级别下的观感参考，取不到数据就保持无遮罩，不影响底图可用。 */
   async function loadBoundary() {
     try {
-      const response = await fetch(boundaryUrl, { signal: lifecycle.signal })
-      if (!response.ok || disposed) return
-      const data = (await response.json()) as FeatureCollection
+      const boundary = await fetchCityBoundary(city.code, lifecycle.signal)
       if (disposed) return
-      const source = map.getSource('cityLimit') as GeoJSONSource | undefined
-      source?.setData(data)
+      const layers = buildBoundaryLayers(boundary, city)
+      if (!layers) return
+      // 目标源由样式预先建好（空集合），这里补入遮罩与描边。
+      const target = map.getSource('cityLimit') as GeoJSONSource | undefined
+      target?.setData(boundaryCollection(layers))
     } catch {
       // 让路给底图本身；失败原因不在这里提示。
     }

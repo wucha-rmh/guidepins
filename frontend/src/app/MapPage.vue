@@ -122,6 +122,13 @@ function selectTab(tab: 'public' | 'mine') {
   void router.replace({ path: route.path, query: tab === 'mine' ? { tab: 'mine' } : {} })
 }
 
+/** 侧栏城市下拉：换城市回到该市的地市底图，保留「我的地图」分类。 */
+function switchCity(event: Event) {
+  const next = (event.target as HTMLSelectElement).value
+  if (!next || next === cityId.value) return
+  void router.push({ name: 'city-map', params: { cityId: next }, query: mine.value ? { tab: 'mine' } : {} })
+}
+
 async function createdMap(map: ManagedMap) {
   owned.applyMap(map)
   await router.push({ name: 'public-map', params: { cityId: map.cityId, mapId: map.id }, query: { tab: 'mine' } })
@@ -181,6 +188,12 @@ function openGuide(guideId: string) {
     </header>
     <div class="map-workspace" :class="{ 'map-workspace--sidebar-collapsed': sidebarCollapsed }">
       <aside v-show="!sidebarCollapsed" id="map-sidebar" ref="sidebar" class="map-sidebar" aria-label="地图列表与详情">
+        <label v-if="cities.length > 1" class="map-city-switch">
+          <span class="map-city-switch-label">城市</span>
+          <select :value="cityId" aria-label="切换城市" @change="switchCity">
+            <option v-for="item in cities" :key="item.id" :value="item.id">{{ item.name }}</option>
+          </select>
+        </label>
         <div class="map-tabs" role="group" aria-label="地图列表分类">
           <button type="button" :aria-pressed="!mine" @click="selectTab('public')">公共地图</button>
           <button type="button" :aria-pressed="mine" @click="selectTab('mine')">我的地图</button>

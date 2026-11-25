@@ -36,4 +36,5 @@ guidepins:
     cookie-secure: ${GUIDEPINS_COOKIE_SECURE:true}
     session-cleanup-delay-ms: 3600000
   basemap:
-    file: ${GUIDEPINS_NANJING_PM:./map/南京全市离线地图/nanjing-z16.pmtiles}
+    # 各地市制图产物根目录：每个地市一个「行政区代码-市名」文件夹，内含一份 *.pmtiles 与 boundary.geojson。
+    root: ${GUIDEPINS_BASEMAP_ROOT:./map/江苏省地图数据/城市}

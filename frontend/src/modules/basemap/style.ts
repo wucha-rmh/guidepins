@@ -1,15 +1,20 @@
-import type { ExpressionSpecification, FilterSpecification, StyleSpecification } from 'maplibre-gl'
+import type { ExpressionSpecification, FilterSpecification, LayerSpecification, StyleSpecification } from 'maplibre-gl'
 import type { FeatureCollection } from 'geojson'
 
 /** 市界遮罩先以空数据建源，等底图可用后再补数据，避免样式构造依赖网络请求。 */
 const emptyBoundary: FeatureCollection = { type: 'FeatureCollection', features: [] }
+
+export interface BasemapStyleOptions {
+  /** 该地市的离线包是否内含地铁线路与站点图层。 */
+  metro: boolean
+}
 
 /**
  * 城市漫游底图：道路负责方向，水系与绿地负责识别，建筑只提供街区肌理。
  * 沿用已有 PMTiles 数据与市界，按缩放减少无关细节；色彩和绘制顺序在此集中维护，
  * 交互生命周期由 createBasemap 负责，业务地点由 pinLayers 在最上方绘制。
  */
-export function createBasemapStyle(archiveUrl: string): StyleSpecification {
+export function createBasemapStyle(archiveUrl: string, options: BasemapStyleOptions): StyleSpecification {
   const fonts = ['Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', 'sans-serif']
   const roadClass: ExpressionSpecification = ['get', 'class']
   const majorRoad: ExpressionSpecification = ['in', roadClass, ['literal', ['motorway', 'trunk', 'primary']]]
@@ -24,6 +29,34 @@ export function createBasemapStyle(archiveUrl: string): StyleSpecification {
   const labels = { 'text-field': ['get', 'name'] as ExpressionSpecification, 'text-font': fonts }
   // 只标注数据里已有名称的要素，空字符串同样跳过。
   const hasName: FilterSpecification = ['all', ['has', 'name'], ['!=', ['get', 'name'], '']]
+
+  // 地铁线与站名是可选图层：没有地铁数据的城市不声明，避免 MapLibre 反复报缺图层。
+  const metroLineLayers: LayerSpecification[] = options.metro ? [
+    // 每条线路只画一根线，不做描边或并行股道；颜色取数据自带的 colour。
+    { id: 'metro-lines', source: 'city', 'source-layer': 'metro_line', type: 'line', layout: lineLayout,
+      paint: {
+        'line-color': ['coalesce', ['get', 'colour'], '#7f8b9c'],
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.9, 12, 1.9, 15, 3.1, 18, 4.8],
+        'line-opacity': 0.95,
+      } },
+  ] : []
+  const metroStationLayers: LayerSpecification[] = options.metro ? [
+    // 站点与站名都从 z12 起显示：先标点，再标名字，低缩放时靠名字区分站点。
+    { id: 'metro-station-dots', source: 'city', 'source-layer': 'metro_station', type: 'circle', minzoom: 12,
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 1.8, 15, 3.2, 18, 4.4],
+        'circle-color': '#ffffff',
+        'circle-stroke-color': '#41506b', 'circle-stroke-width': 1.2,
+        'circle-opacity': 0.95,
+      } },
+    { id: 'metro-stations', source: 'city', 'source-layer': 'metro_station', type: 'symbol', minzoom: 12, filter: hasName,
+      layout: {
+        ...labels, 'text-size': ['interpolate', ['linear'], ['zoom'], 12, 10, 17, 12.5],
+        'text-offset': [0, 0.75], 'text-anchor': 'top', 'text-max-width': 6,
+        'text-padding': 3,
+      },
+      paint: { 'text-color': '#33405a', 'text-halo-color': '#ffffff', 'text-halo-width': 1.4 } },
+  ] : []
 
   return {
     version: 8,
@@ -73,6 +106,8 @@ export function createBasemapStyle(archiveUrl: string): StyleSpecification {
         } },
       { id: 'walls', source: 'city', 'source-layer': 'wall', type: 'line', layout: lineLayout,
         paint: { 'line-color': '#a3b09a', 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 0.5, 17, 1.8], 'line-opacity': 0.75 } },
+      // 地铁线压在道路之上，保持与真实线路一致的空间关系，但不遮挡地名。
+      ...metroLineLayers,
       // 市域以外的压暗层与市界描边，数据在底图就绪后补进来（见 createBasemap）。
       { id: 'outside-city', type: 'fill', source: 'cityLimit', filter: ['==', ['get', 'kind'], 'outside'],
         paint: { 'fill-color': '#f0f1eb', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 9, 0.72, 13, 0.2] } },
@@ -91,6 +126,8 @@ export function createBasemapStyle(archiveUrl: string): StyleSpecification {
           'symbol-placement': 'line', 'symbol-spacing': 360, 'text-padding': 8, 'text-max-angle': 30,
         },
         paint: { 'text-color': '#64705f', 'text-halo-color': '#fffefa', 'text-halo-width': 1.5 } },
+      // 站名排在地名之前，确保同一位置冲突时地铁站优先可见。
+      ...metroStationLayers,
       // 远景只显示城市和城镇；街道在 z13、一般地点在 z15 后出现，减轻首屏密度。
       { id: 'place-names', source: 'city', 'source-layer': 'place', type: 'symbol', filter: hasName,
         layout: {

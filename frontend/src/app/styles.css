@@ -67,32 +67,28 @@ h1, h2, h3, h4, p { margin: 0; }
 .art-destination { fill: #b87550; stroke: #fffefa; stroke-width: 3; }
 .art-compass { position: absolute; top: 20px; right: 20px; text-align: center; color: var(--home-meta); font: .75rem/1.5 Arial, sans-serif; }
 .art-compass > span { font-size: 1.25rem; }
-.city-directory { margin-top: 32px; }
+.city-directory { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 32px; }
 .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
 .section-heading h2 { font-size: 1.25rem; line-height: 1.4; font-weight: 500; }
 .directory-count { flex-shrink: 0; color: var(--home-meta); font-size: .8125rem; line-height: 1.5; font-variant-numeric: tabular-nums; }
-.city-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.city-grid--single { grid-template-columns: minmax(0, 1fr); }
-.city-card { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 16px 24px; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); transition: border-color .16s var(--home-ease), background-color .16s var(--home-ease); }
-.city-card:hover { border-color: #a1b79b; background: #f7f9f3; }
-.city-card-art { grid-row: 1 / 3; }
-.city-card-art svg { display: block; width: 100%; }
-.card-map-land { fill: #edf1e6; stroke: #dce3d3; }
-.card-map-street { stroke: #fffefa; stroke-width: 6; }
-.card-map-route { stroke: #94a88a; stroke-width: 1.5; stroke-dasharray: 4 4; }
-.card-map-dot { fill: var(--terracotta); stroke: var(--paper); stroke-width: 3; }
-.city-card-content { min-width: 0; }
-.city-card-kicker { color: var(--home-meta); font-size: .75rem; line-height: 1.5; }
-.city-card h3 { margin-top: 8px; font-family: var(--serif); font-size: 1.75rem; line-height: 1.4; font-weight: 500; overflow-wrap: anywhere; }
-.city-card-content p { margin-top: 8px; color: var(--home-secondary); font-size: .875rem; line-height: 1.5; }
-.city-card-action { display: flex; align-items: center; gap: 12px; align-self: end; justify-self: start; color: var(--accent); font-size: .875rem; font-weight: 500; line-height: 1.5; }
-.city-card-arrow { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #d8e2d0; border-radius: 50%; transition: color .16s var(--home-ease), background-color .16s var(--home-ease), border-color .16s var(--home-ease); }
-.city-card-arrow svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.city-card:hover .city-card-arrow, .city-card:focus-visible .city-card-arrow { color: var(--paper); background: var(--accent); border-color: var(--accent); }
-.city-grid--single .city-card { grid-template-columns: 128px minmax(0, 1fr) auto; gap: 24px; padding: 20px 24px; }
-.city-grid--single .city-card-art { grid-row: auto; }
-.city-grid--single .city-card h3 { font-size: 2rem; }
-.city-grid--single .city-card-action { align-self: center; }
+/* 首页只留一个入口按钮；城市清单在对话框中临时展开。 */
+.city-select-button { min-height: 44px; padding: 11px 22px; font-size: .875rem; }
+.city-select-error { display: inline-flex; align-items: center; gap: 8px; color: #a86542; font-size: .8125rem; line-height: 1.5; }
+.city-picker-dialog { width: min(560px, calc(100vw - 32px)); padding: 22px 24px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); color: inherit; box-shadow: 0 22px 60px rgb(31 41 35 / 18%); }
+.city-picker-dialog::backdrop { background: rgb(31 41 35 / 32%); }
+.city-picker-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.city-picker-head h2 { font-size: 1.125rem; line-height: 1.4; font-weight: 500; }
+.city-picker-note { display: flex; align-items: center; gap: 8px; color: var(--home-secondary); font-size: .875rem; line-height: 1.6; }
+/* 分级下拉：省份一行、地市一行，都是原生 select，键盘与移动端都能直接用。 */
+.city-picker-fields { display: flex; flex-direction: column; gap: 12px; }
+.city-picker-field { display: flex; flex-direction: column; gap: 6px; }
+.city-picker-label { color: var(--home-secondary); font-size: .8125rem; line-height: 1.5; }
+.city-picker-field select { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid #dfe5d7; border-radius: 8px; background: #fbfcf7; color: #3f4a3f; font-size: .9375rem; line-height: 1.5; }
+.city-picker-field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.city-picker-field select:disabled { opacity: .6; cursor: default; }
+.city-picker-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.city-picker-actions .text-link { font-size: .8125rem; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .page-footnote { display: flex; justify-content: space-between; gap: 24px; margin-top: auto; padding-top: 32px; color: var(--home-meta); font-size: .75rem; line-height: 1.5; }
 .footer-dot { margin: 0 12px; }
 
@@ -136,6 +132,10 @@ h1, h2, h3, h4, p { margin: 0; }
 .map-workspace { --map-pin-active: #a65330; --sidebar-width: 304px; position: relative; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); min-height: 520px; height: calc(100dvh - 148px); overflow: hidden; border: 1px solid #dce3d4; border-radius: 14px; background: var(--paper); box-shadow: 0 5px 25px #364a3104; }
 .map-workspace--sidebar-collapsed { --sidebar-width: 0px; }
 .map-sidebar { grid-column: 1; grid-row: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d2dbca transparent; border-right: 1px solid var(--line); }
+/* 城市切换：放在侧栏最上方，切换后回到该市的地市底图。 */
+.map-city-switch { display: flex; align-items: center; gap: 10px; padding: 16px 19px 0; }
+.map-city-switch-label { flex-shrink: 0; color: var(--muted); font-size: .75rem; letter-spacing: .04em; }
+.map-city-switch select { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid #d5ddcd; border-radius: 8px; color: inherit; font: inherit; font-size: .8125rem; background: var(--paper); }
 .map-workspace > .basemap-viewport { grid-column: 2; grid-row: 1; }
 /* 收纳按钮独立于隐藏区域，收起后仍可通过鼠标或键盘展开；不重建地图实例。 */
 .sidebar-toggle { position: absolute; z-index: 4; top: 50%; left: var(--sidebar-width); display: grid; place-items: center; width: 30px; height: 48px; padding: 0; transform: translateY(-50%); border: 1px solid #cbd5c6; border-left: 0; border-radius: 0 8px 8px 0; color: var(--accent); background: var(--paper); box-shadow: 2px 1px 6px #263d2f0a; }

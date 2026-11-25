@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class CityModuleTest {
     private final UUID cityId = UUID.randomUUID();
-    private final City city = new City(cityId, "320100", "南京", "/maps/nanjing/v1/nanjing-z16.pmtiles",
+    private final City city = new City(cityId, "320100", "南京", "/maps/320100.pmtiles",
             new City.Bounds(118.3, 31.2, 119.2, 32.6));
 
     @Test

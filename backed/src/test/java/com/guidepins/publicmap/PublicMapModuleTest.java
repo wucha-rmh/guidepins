@@ -105,7 +105,7 @@ class PublicMapModuleTest {
         PublicMapDataMapper dataMapper = Mockito.mock(PublicMapDataMapper.class);
         CityDataMapper cityMapper = Mockito.mock(CityDataMapper.class);
         when(cityMapper.findById(cityId)).thenReturn(Optional.of(new City(cityId, "320100", "南京",
-                "/maps/nanjing/v1/nanjing-z16.pmtiles", new City.Bounds(118.3, 31.2, 119.2, 32.6))));
+                "/maps/320100.pmtiles", new City.Bounds(118.3, 31.2, 119.2, 32.6))));
         when(dataMapper.findByCityId(cityId)).thenReturn(List.of(map));
         when(dataMapper.findById(mapId, null)).thenReturn(Optional.of(managedMap));
         when(dataMapper.findPinsByMapId(mapId, null)).thenReturn(List.of(pin));

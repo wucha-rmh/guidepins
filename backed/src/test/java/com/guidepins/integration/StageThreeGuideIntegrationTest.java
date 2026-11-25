@@ -54,20 +54,24 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 class StageThreeGuideIntegrationTest {
     private static final UUID CITY = UUID.fromString("32010000-0000-4000-8000-000000000001");
     private static final String PASSWORD = "GuidePins-Test-123!";
-    private static final Path BASEMAP = Path.of("target", "stage-three-guide-test.pmtiles").toAbsolutePath();
+    private static final Path BASEMAP_ROOT = Path.of("target", "stage-three-guide-basemap").toAbsolutePath();
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper json;
 
     @DynamicPropertySource
     static void fileProperty(DynamicPropertyRegistry registry) throws Exception {
-        Files.write(BASEMAP, new byte[] {1, 2, 3, 4, 5});
-        registry.add("guidepins.basemap.file", BASEMAP::toString);
+        // 按生产的「代码-市名」目录约定造一份最小底图，验证按代码寻址。
+        Path cityDirectory = Files.createDirectories(BASEMAP_ROOT.resolve("320100-南京市"));
+        Files.write(cityDirectory.resolve("nanjing-z16.pmtiles"), new byte[] {1, 2, 3, 4, 5});
+        Files.writeString(cityDirectory.resolve("boundary.geojson"), "{\"type\":\"FeatureCollection\",\"features\":[]}");
+        registry.add("guidepins.basemap.root", BASEMAP_ROOT::toString);
     }
 
     @AfterAll
     static void removeFile() throws Exception {
-        Files.deleteIfExists(BASEMAP);
+        Files.deleteIfExists(BASEMAP_ROOT.resolve("320100-南京市").resolve("nanjing-z16.pmtiles"));
+        Files.deleteIfExists(BASEMAP_ROOT.resolve("320100-南京市").resolve("boundary.geojson"));
     }
 
     @BeforeEach
@@ -77,7 +81,7 @@ class StageThreeGuideIntegrationTest {
             sql.execute("TRUNCATE public.pin_guide, public.guide, public.map_pin, public.travel_map, "
                     + "public.auth_session, public.user_account, public.city");
             sql.update("INSERT INTO public.city (id, code, name, basemap_path, west, south, east, north) "
-                    + "VALUES (?, '320100', '南京', '/maps/nanjing/v1/nanjing-z16.pmtiles', 118.3, 31.2, 119.2, 32.6)", CITY);
+                    + "VALUES (?, '320100', '南京', '/maps/320100.pmtiles', 118.3, 31.2, 119.2, 32.6)", CITY);
         }
     }
 
