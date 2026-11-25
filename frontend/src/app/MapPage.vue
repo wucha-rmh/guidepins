@@ -10,6 +10,8 @@ import '../modules/map-management/styles.css'
 import PinEditingPanel from '../modules/pin-editing/PinEditingPanel.vue'
 import { usePinEditing } from '../modules/pin-editing/usePinEditing'
 import '../modules/pin-editing/styles.css'
+import GuidePanel from '../modules/guide-editing/GuidePanel.vue'
+import '../modules/guide-editing/styles.css'
 import BasemapViewport from '../modules/basemap/BasemapViewport.vue'
 import { useCities } from '../modules/city/useCities'
 import MapDetailPanel from '../modules/public-map/MapDetailPanel.vue'
@@ -141,6 +143,19 @@ function focusPin(pinId: string) {
   selectedPinId.value = pinId
   viewport.value?.flyToPin(pinId)
 }
+
+// 攻略写完后图钉内嵌的出处摘要也会变，因此重新读取详情并刷新个人地图的更新时间。
+const guidePanel = ref<InstanceType<typeof GuidePanel> | null>(null)
+function guideChanged() {
+  void reloadDetail()
+  void owned.refresh()
+}
+
+/** 图钉列表里的出处标题：展开侧栏中对应的那篇攻略。 */
+function openGuide(guideId: string) {
+  void setSidebarCollapsed(false)
+  guidePanel.value?.openGuide(guideId)
+}
 </script>
 
 <template>
@@ -192,8 +207,11 @@ function focusPin(pinId: string) {
           :error="pinEditing.error.value" :notice="pinEditing.notice.value"
           @place="pinEditing.startPlacing" @cancel="pinEditing.cancel"
           @save="(values) => pinEditing.save(values.name, values.description)" @delete="pinEditing.remove" />
+        <GuidePanel v-if="detail && !mapMissing" ref="guidePanel" :map-id="detail.id" :pins="pins" :editable="canEditPins"
+          @changed="guideChanged" @focus-pin="focusPin" />
         <MapDetailPanel v-if="mapId && !mapMissing && authState === 'ready'" :detail="detail" :state="detailState" :error="detailError"
-          :selected-pin-id="selectedPinId" :editable="canEditPins" @retry="reloadDetail" @select-pin="focusPin" @edit-pin="editPin" />
+          :selected-pin-id="selectedPinId" :editable="canEditPins" @retry="reloadDetail" @select-pin="focusPin"
+          @edit-pin="editPin" @open-guide="openGuide" />
         <div v-if="!mapId" class="sidebar-note"><span class="sidebar-note-mark" aria-hidden="true">⌖</span><h3>先随意逛逛，也很好。</h3><p>拖动地图发现街巷，或选一张地图，沿着地点慢慢探索。</p></div>
       </aside>
       <button ref="sidebarToggle" class="sidebar-toggle" type="button" :aria-expanded="!sidebarCollapsed" aria-controls="map-sidebar"

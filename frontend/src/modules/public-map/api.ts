@@ -1,4 +1,4 @@
-import type { MapPin, PublicMap, PublicMapDetail } from './types'
+import type { GuideSummary, MapPin, PublicMap, PublicMapDetail } from './types'
 import { readApiResponse } from '../../shared/apiResponse'
 
 /** 资源不存在或地址无效；界面据此给出返回入口，而不是“重试”。 */
@@ -22,11 +22,19 @@ function isPublicMap(value: unknown): value is PublicMap {
     isNonEmptyString(value.cityId) && isNonEmptyString(value.name)
 }
 
+/** 攻略摘要校验；来源链接允许为空，出现时必须是字符串，避免把非文本内容渲染成链接。 */
+export function isGuideSummary(value: unknown): value is GuideSummary {
+  if (!isRecord(value) || !isNonEmptyString(value.id) || !isNonEmptyString(value.title)) return false
+  return value.sourceUrl === null || typeof value.sourceUrl === 'string'
+}
+
 /** 图钉形状校验与写入接口共用，避免编辑模块复制一套可能走样的校验。 */
 export function isMapPin(value: unknown): value is MapPin {
   if (!isRecord(value) || !isNonEmptyString(value.id) || !isNonEmptyString(value.name)) return false
   // 说明允许为空，但出现时必须是字符串，避免把模板内容直接注入界面。
   if (value.description !== null && typeof value.description !== 'string') return false
+  // 出处摘要始终以数组出现；写入接口返回空数组，详情接口返回当前关联的攻略。
+  if (!Array.isArray(value.guides) || !value.guides.every(isGuideSummary)) return false
   const { longitude, latitude } = value
   return typeof longitude === 'number' && typeof latitude === 'number' &&
     Number.isFinite(longitude) && Number.isFinite(latitude) &&

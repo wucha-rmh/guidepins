@@ -6,6 +6,14 @@ export interface PublicMap {
   name: string
 }
 
+/** 挂在图钉下的攻略摘要；完整正文由攻略接口单独提供。 */
+export interface GuideSummary {
+  id: string
+  title: string
+  /** 来源链接，可为空。 */
+  sourceUrl: string | null
+}
+
 export interface MapPin {
   id: string
   name: string
@@ -15,6 +23,8 @@ export interface MapPin {
   longitude: number
   /** WGS84 纬度。 */
   latitude: number
+  /** 提到这个地点的攻略摘要；没有出处时为空数组。 */
+  guides: GuideSummary[]
 }
 
 /** 地图详情在列表字段之外附带当前地图的全部图钉。 */
