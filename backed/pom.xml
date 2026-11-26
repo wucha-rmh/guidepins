@@ -54,6 +54,11 @@
         </dependency>
     </dependencies>
     <build>
+        <resources>
+            <resource><directory>src/main/resources</directory></resource>
+            <!-- npm run build:offline 生成自包含查看器，再由 Maven 收入 JAR。 -->
+            <resource><directory>target/offline-assets</directory></resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

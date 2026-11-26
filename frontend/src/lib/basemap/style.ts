@@ -1,5 +1,6 @@
 import type { ExpressionSpecification, FilterSpecification, LayerSpecification, StyleSpecification } from 'maplibre-gl'
 import type { FeatureCollection } from 'geojson'
+import { METRO_STATION_ICON } from './metroStationIcon'
 
 /** 市界遮罩先以空数据建源，等底图可用后再补数据，避免样式构造依赖网络请求。 */
 const emptyBoundary: FeatureCollection = { type: 'FeatureCollection', features: [] }
@@ -34,6 +35,8 @@ export function createBasemapStyle(archiveUrl: string, options: BasemapStyleOpti
   const metroLineLayers: LayerSpecification[] = options.metro ? [
     // 每条线路只画一根线，不做描边或并行股道；颜色取数据自带的 colour。
     { id: 'metro-lines', source: 'city', 'source-layer': 'metro_line', type: 'line', layout: lineLayout,
+      // 贯通特快沿用既有线路，不再把同一轨道叠画成额外线路。
+      filter: ['!=', ['get', 'service_type'], 'through_express_service'],
       paint: {
         'line-color': ['coalesce', ['get', 'colour'], '#7f8b9c'],
         'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.9, 12, 1.9, 15, 3.1, 18, 4.8],
@@ -41,21 +44,19 @@ export function createBasemapStyle(archiveUrl: string, options: BasemapStyleOpti
       } },
   ] : []
   const metroStationLayers: LayerSpecification[] = options.metro ? [
-    // 站点与站名都从 z12 起显示：先标点，再标名字，低缩放时靠名字区分站点。
-    { id: 'metro-station-dots', source: 'city', 'source-layer': 'metro_station', type: 'circle', minzoom: 12,
-      paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 1.8, 15, 3.2, 18, 4.4],
-        'circle-color': '#ffffff',
-        'circle-stroke-color': '#41506b', 'circle-stroke-width': 1.2,
-        'circle-opacity': 0.95,
-      } },
+    // 圆角车头图标约 18～24px；站名可避让，但站点图标始终保留，便于沿线识别。
     { id: 'metro-stations', source: 'city', 'source-layer': 'metro_station', type: 'symbol', minzoom: 12, filter: hasName,
       layout: {
-        ...labels, 'text-size': ['interpolate', ['linear'], ['zoom'], 12, 10, 17, 12.5],
-        'text-offset': [0, 0.75], 'text-anchor': 'top', 'text-max-width': 6,
+        ...labels,
+        'icon-image': METRO_STATION_ICON,
+        'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.5625, 14, 0.6875, 16, 0.75],
+        'icon-allow-overlap': true, 'icon-padding': 2,
+        'text-size': ['interpolate', ['linear'], ['zoom'], 12, 11.5, 16, 13.5, 18, 14],
+        'text-offset': [1.2, 0], 'text-anchor': 'left', 'text-max-width': 7,
+        'text-optional': true,
         'text-padding': 3,
       },
-      paint: { 'text-color': '#33405a', 'text-halo-color': '#ffffff', 'text-halo-width': 1.4 } },
+      paint: { 'text-color': '#253750', 'text-halo-color': '#ffffff', 'text-halo-width': 1.8 } },
   ] : []
 
   return {

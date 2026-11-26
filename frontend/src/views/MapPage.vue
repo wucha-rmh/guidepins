@@ -20,6 +20,7 @@ import type { MapPin } from '../types/publicMap'
 import { usePublicMapDetail } from '../composables/usePublicMapDetail'
 import { usePublicMaps } from '../composables/usePublicMaps'
 import StatePanel from '../components/StatePanel.vue'
+import OfflineDownloadPanel from '../components/OfflineDownloadPanel.vue'
 
 const props = defineProps<{ personalMapsRequest?: number }>()
 const route = useRoute()
@@ -225,6 +226,8 @@ function openGuide(guideId: string) {
         <MapDetailPanel v-if="mapId && !mapMissing && authState === 'ready'" :detail="detail" :state="detailState" :error="detailError"
           :selected-pin-id="selectedPinId" :editable="canEditPins" @retry="reloadDetail" @select-pin="focusPin"
           @edit-pin="editPin" @open-guide="openGuide" />
+        <OfflineDownloadPanel v-if="city.code === '320100' && detail && !mapMissing && authState === 'ready'"
+          :key="`${detail.id}:${user?.id ?? 'guest'}`" :map-id="detail.id" />
         <div v-if="!mapId" class="sidebar-note"><span class="sidebar-note-mark" aria-hidden="true">⌖</span><h3>先随意逛逛，也很好。</h3><p>拖动地图发现街巷，或选一张地图，沿着地点慢慢探索。</p></div>
       </aside>
       <button ref="sidebarToggle" class="sidebar-toggle" type="button" :aria-expanded="!sidebarCollapsed" aria-controls="map-sidebar"

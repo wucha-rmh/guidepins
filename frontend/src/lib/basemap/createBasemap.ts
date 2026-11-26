@@ -9,6 +9,7 @@ import type { City } from '../../types/city'
 import type { MapPin } from '../../types/publicMap'
 import { boundaryCollection, buildBoundaryLayers } from './boundary'
 import { hasMetroLayers } from './metro'
+import { registerMetroStationIcon } from './metroStationIcon'
 import { createPinOverlay, type DraftPoint } from './pinLayers'
 import { createBasemapStyle } from './style'
 import { urbanViewFor } from './views'
@@ -92,6 +93,7 @@ export function createBasemap(container: HTMLElement, city: City, events: Basema
   }
 
   let disposed = false
+  const disposeMetroIcon = hasMetroLayers(city.code) ? registerMetroStationIcon(map) : () => {}
   let failed = false
   let timeout: ReturnType<typeof setTimeout> | undefined
   function fail(message: string) {
@@ -185,6 +187,7 @@ export function createBasemap(container: HTMLElement, city: City, events: Basema
     },
     destroy() {
       disposed = true
+      disposeMetroIcon()
       clearTimeout(timeout)
       lifecycle.abort()
       resizeObserver.disconnect()
