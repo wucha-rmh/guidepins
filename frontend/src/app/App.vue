@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import AccountMenu from '../modules/auth/AccountMenu.vue'
-import { useAuth } from '../modules/auth/useAuth'
+import AccountMenu from '../components/AccountMenu.vue'
+import { useAuth } from '../composables/useAuth'
 
 const mainContent = ref<HTMLElement | null>(null)
 const route = useRoute()
